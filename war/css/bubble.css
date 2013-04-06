@@ -1,0 +1,177 @@
+.triangle-border {
+	position: relative;
+	padding: 8px 10px 5px;
+	margin: 0;
+	color: #333;
+	background: #eee;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+}
+
+.triangle-border.left {
+	margin-left: 15px;
+}
+
+.triangle-border.right {
+	margin-right: 30px;
+}
+
+.triangle-border:before {
+	content: "";
+	display: block;
+	position: absolute;
+	bottom: -40px;
+	left: 40px;
+	width: 0;
+	height: 0;
+	border: 20px solid transparent;
+	border-top-color: #999;
+}
+
+.triangle-border:after {
+	content: "";
+	display: block;
+	position: absolute;
+	bottom: -26px;
+	left: 47px;
+	width: 0;
+	height: 0;
+	border: 13px solid transparent;
+	border-top-color: #eee;
+}
+
+.triangle-border.top:before {
+	top: -40px;
+	right: 40px;
+	bottom: auto;
+	left: auto;
+	border-color: transparent;
+}
+
+.triangle-border.top:after {
+	top: -26px;
+	right: 35px;
+	bottom: auto;
+	left: auto;
+	border: 13px solid transparent;
+	border-bottom-color: #eee;
+}
+
+.triangle-border.left:before {
+	top: 10px;
+	left: -30px;
+	bottom: auto;
+	border-width: 11px 30px 11px 0;
+	border-style: solid;
+	border-color: transparent;
+}
+
+.triangle-border.left:after {
+	top: 10px;
+	left: -13px;
+	bottom: auto;
+	border-width: 13px 13px 13px 0;
+	border-style: solid;
+	border-color: transparent #eee;
+}
+
+/* triangle-isosceles */
+.triangle-border.right:before {
+	top: 10px;
+	right: -30px;
+	bottom: auto;
+	left: auto;
+	border-width: 15px 0 15px 30px;
+	border-style: solid;
+	border-color: transparent #999;
+}
+
+.triangle-border.right:after {
+	top: 16px;
+	right: -21px;
+	bottom: auto;
+	left: auto;
+	border-width: 9px 0 9px 21px;
+	border-style: solid;
+	border-color: transparent #eee;
+}
+
+.triangle-isosceles::after {
+border-color: #4F4F4F transparent;
+border-style: solid;
+border-width: 15px 15px 0px;
+bottom: -15px;
+content: '';
+display: block;
+height: 0px;
+left: 50px;
+position: absolute;
+width: 0px;
+}
+
+.triangle-isosceles.top::after {border-color: #747E80 transparent;border-width: 0px 15px 15px;bottom: auto;left: auto;right: 50px;top: -15px;}
+.triangle-isosceles {background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#747E80), to(#747E80));border: 2px solid #d5e1dd;-webkit-border-radius:8px;
+	color: black;height: 18em;margin: 15px 0px 0px 35%;padding: 0.4em 0px 0px 0.4em;position: relative;width: 20em;}
+.triangle-isosceles.top {background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#747E80), to(#747E80));}
+
+/* triangle-obtuse */
+.triangle-obtuse {-webkit-border-radius: 10px 10px 10px 10px;color:#FFFFFF;}
+.triangle-obtuse.top {background:-webkit-linear-gradient(#C81E2B, #F04349) repeat scroll 0 0 transparent;}
+.triangle-obtuse.left {background: none repeat scroll 0 0 #C81E2B;margin-left: 50px;}
+.triangle-obtuse.right {background: none repeat scroll 0 0 #C81E2B;margin-right: 50px;}
+.triangle-obtuse:before{border-color:transparent #111;border-style:solid;border-width:0 35px 35px 0;bottom:-35px;content:"";display:block;left:60px;position:absolute;width:0;}
+/*.triangle-obtuse:after{border-color:transparent #999;border-style:solid;border-width:0 10px 20px 0;bottom:-20px;content:"";display:block;left:80px;position:absolute;width:0;}*/
+.triangle-obtuse.top:before {
+    border-color: transparent #C81E2B;
+    border-right: 0 none #C81E2B;
+    border-style: none;
+    border-width: 20px 0 0 30px;
+    bottom: auto;
+    left: auto;
+    right: 60px;
+    top: -20px;
+}
+.triangle-obtuse.top:after {
+    border-color: transparent #FFFFFF;
+    border-width: 20px 0 0 10px;
+    bottom: auto;
+    left: auto;
+    right: 80px;
+    top: -20px;
+}
+.triangle-obtuse.left:before {
+    border-color: #C81E2B transparent;
+    border-style: none;
+    border-width: 0 0 30px 50px;
+    bottom: auto;
+    left: -50px;
+    top: 15px;
+}
+.triangle-obtuse.left:after {
+    border-color: #FFFFFF transparent;
+    border-style: none;
+    border-width: 0 0 10px 50px;
+    bottom: auto;
+    left: -50px;
+    top: 35px;
+}
+.triangle-obtuse.right:before {
+    border-color: #C81E2B transparent;
+    border-style: none;
+    border-width: 0 50px 30px 0;
+    bottom: auto;
+    left: auto;
+    right: -50px;
+    top: 15px;
+}
+.triangle-obtuse.right:after {
+    border-color: #FFFFFF transparent;
+    border-style: none;
+    border-width: 0 50px 10px 0;
+    bottom: auto;
+    left: auto;
+    right: -50px;
+    top: 35px;
+}
+

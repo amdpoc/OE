@@ -1,0 +1,62 @@
+/*
+ul li input[type="text"],
+div input[type="text"],
+ul li input[type="password"],
+ul li input[type="tel"],
+ul li input[type="number"],
+ul li input[type="search"],
+ul li input[type="email"],
+ul li input[type="url"],
+ul li textarea{color:#2B3E42;background:inherit;font: bold 13px "Helvetica Neue", Helvetica;padding:2px 0 2px 2px;display: inline-block;
+	margin-left: 0px;-webkit-appearance: none;overflow: hidden; -webkit-user-select: auto;}
+
+input[type="text"]:disabled,
+input[type="number"]:disabled{border-color:#666;background-color:#999;color:#2B3E42;}
+*/
+ul#productList li input[type="text"]:disabled{color:#fff;}
+
+#jqt ul li select.disable{border-width:0px;color:#666;}
+
+textarea{-webkit-border-radius:0px;border:1px solid #2B3E42;height:80px;width:83%;-webkit-box-sizing:border-box;color:#2B3E42;font: normal 12px Helvetica;
+	padding:2px;display: inline-block;-webkit-appearance: none;-webkit-user-select: auto;background:inherit;}
+	
+	div.detailsNotes textarea{width:100%;}
+
+#jqt ul li input[type="text"].customInput{border: 1px solid #bbb;background-color:#E6E6E6;-webkit-appearance: none;-webkit-border-radius: 14px;
+    height: 28px;padding:0px 5px 0px 5px;margin-top: 4px;}
+/*
+div input[type="text"],
+div input[type="email"], 
+div input[type="number"],
+div input[type="search"]{font: normal 12px Helvetica;background:inherit;margin:0px;height: 20px;color:#2B3E42;padding:2px 0 0 1px;
+	webkit-box-sizing:border-box;-webkit-appearance: none;}
+	.searchFormBlock div input[type="text"],
+	.searchFormBlock div input[type="number"] {border: 1px solid #f7f3e8;color:#f7f3e8;}
+	*/
+div input[type="search"]{height:24px;line-height:17px;width:82%;}
+
+input[type="checkbox"], 
+input[type="radio"],
+input[type="checkbox"]:checked, 
+input[type="radio"]:checked {width: 20px;height:20px;border: 1px solid #999;background-color:#666;-webkit-appearance: none;}
+
+input[type="checkbox"]:checked, 
+input[type="radio"]:checked {background:url(ui-lightness/images/ui-icons_ffffff_256x240.png) -63px -144px no-repeat;}
+
+	/*div.contentGroup input{margin: 3px;}*/
+
+/* PHONE */
+input.phone,
+input.searchPhone{width:40px;}
+input.ph3 {width:45px;}
+select{-webkit-appearance:menulist;background:#F7F3E8;opacity:0.9;color:#333;border:1px solid #333 ;font: normal 12px Helvetica;line-height:18px;}
+select:disabled{background:#999;border:1px solid #666;color:#333;}
+select option{line-height: 25px;}
+
+/* HIDE SPIN-BUTTON ON INPUT[type=number] */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    /* display: none; <- Crashes Chrome on hover */
+    -webkit-appearance: none;
+    margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
+}

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL MAP 2.0//EN"
+	"http://www.ibatis.com/dtd/sql-map-2.dtd">
+<sqlMap>
+<cacheModel id="employeeCache" type="LRU">
+  <flushInterval hours="24" />
+  <property name="size" value="1000" />
+</cacheModel>
+
+
+<typeAlias alias="amdocsEmployee" type="ilink.security.AmdocsEmployee"/>
+
+<resultMap id="amdocsEmployeeResult" class="amdocsEmployee">
+    <result property="firstName"       column="EMP_FIRST_NAME"/>
+    <result property="lastName"        column="EMPLOYEE_SURNAME"/>
+    <result property="securityProfile" column="SECURITY_PROFILE"/>
+    <result property="employeeNumber"  column="EMPLOYEE_ID"/>
+    <result property="officeCode"      column="OFFICE_CODE"/>
+    <result property="officeType"      column="OFFICE_TYPE"/>
+    <result property="officeName"      column="OFFICE_NAME"/>
+    <result property="eMail"           column="E_MAIL_ADDRESS"/>
+    <result property="role"            column="ROLE_CODE"/>
+    <result property="timezone"        column="TIME_ZONE"/>
+ </resultMap>
+
+<select id="getAmdocsEmployee" resultMap="amdocsEmployeeResult" parameterClass="String">
+    SELECT emp_first_name, employee_surname,
+        TO_CHAR (NVL (security_profile, 0)) security_profile,
+        TO_CHAR (employee_id) employee_id, e.office_code, e.office_type,
+        o.office_name,
+        NVL (e_mail_address, '') e_mail_address, role_code,
+        CASE
+            WHEN o.TIME_ZONE = 'CDT'
+                THEN 'America/Chicago'
+            WHEN o.TIME_ZONE = 'PDT'
+                THEN 'America/Los_Angeles'
+            WHEN o.TIME_ZONE = 'EDT'
+                THEN 'America/New_York'
+            WHEN o.TIME_ZONE = 'MST'
+                THEN 'America/Phoenix'
+            WHEN o.TIME_ZONE = 'MDT'
+                THEN 'America/Denver'
+        END TIME_ZONE
+    FROM employee e, office o
+    WHERE UPPER (e.login_name) = UPPER (#userName#)
+    AND e.employee_status NOT IN (1, 4)
+    AND o.office_code(+) = e.office_code
+    AND o.office_type(+) = e.office_type
+    and rownum = 1
+</select>
+<select id="getAmdocsEmployeeSecProfile" resultClass="String"  parameterClass="String">
+    SELECT to_char(nvl(SECURITY_PROFILE, 0)) SECURITY_PROFILE
+        FROM employee_secprof
+     WHERE employee_id = #employeeId#
+</select>
+<select id="getAmdocsEmployeeActivityCode" resultClass="String"  parameterClass="String">
+    SELECT /*app.security_profile_code, */ NVL(app.activity_code, '') activity_code
+      FROM employee_secprof es, applauth app
+     WHERE es.employee_id = #employeeId#
+       AND app.security_profile_code = es.security_profile
+       AND (   app.activity_code = 'TRM002'
+            OR app.activity_code = 'TRM003'
+            OR app.activity_code = 'TRM004'
+           )
+</select>
+<select id="getManagerEmailByRepId" resultClass="java.lang.String" parameterClass="java.lang.String">
+  SELECT employee.e_mail_address manager_email_address
+  FROM employee, sales_roster, crew
+ WHERE sales_roster.rep_id = #repId#
+   AND sales_roster.rep_home_crew = crew.crew_code
+   AND sales_roster.rep_home_division = crew.division_code
+   AND (SELECT OLD.logical_date
+          FROM op_logical_date OLD
+         WHERE OLD.logical_date_type = 'O')
+          BETWEEN sales_roster.effective_from_date
+              AND sales_roster.effective_to_date
+   AND (SELECT OLD.logical_date
+          FROM op_logical_date OLD
+         WHERE OLD.logical_date_type = 'O') BETWEEN crew.effective_from_date
+                                                AND crew.effective_to_date
+   AND crew.manager_id = employee.employee_id
+</select>
+</sqlMap>

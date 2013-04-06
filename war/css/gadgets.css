@@ -1,0 +1,47 @@
+#jqt .gadgetBubble{border:1px solid #999;background:#aaa url("../images/Bg.Dot.Small.gif");text-align:center;height:110px;position:absolute;bottom:85px;left:auto;
+	right:1%;overflow-x:visible;-webkit-box-sizing:border-box;}
+
+   #closeGadgetsBubble{margin:0;padding:8px;width:16px;height:16px;background:none;border:none;}
+
+
+#jqt .gadgetIconHolder{height:100%;text-align:center;display:inline-block;-webkit-box-sizing:border-box;}
+#jqt .gadgetIcon{width:70px;margin:14px 10px 12px 15px;padding-top:69px;-webkit-box-sizing:border-box;}
+#jqt .firstIcon{margin-left:30px;}
+#jqt .lastIcon{margin-right:15px;}
+	#jqt .gadgetIcon span{font-size:10px;font-weight:bold;color:lightgray;}
+.notes,.weather,.outlook,.calendar,.map {background:url('../images/Gadget.Icon.png')center top no-repeat;}
+.notes {background-position:center -100px;}
+.outlook {background-position:center -200px;}
+.calendar{background-position:center -300px}
+.map{background-position:center -400px;}
+
+
+#modal_body div.loader_icon{background:url("../images/Icon.Loader.Snake.Black.gif") no-repeat center center;width:100%;height:150px;margin:10px 0 0;}
+#modal_body .modal_header input{padding:2px 5px;width:100px;height:18px;border:1px solid #666;margin:2px 0 0;}
+#modal_body .content_empty{height:150px;text-align:center;line-height:150px;margin:0;}
+	#appts_content,
+	#outlook_content{min-height:150px;margin:10px 0 0;background:#ddd;}
+	#modal_body .row {height:26px;line-height:26px;-webkit-box-sizing:border-box;width:100%;}
+	#outlook_content .row {height:22px;line-height:22px;}
+	#modal_body .inputRow {height:32px;}
+	#modal_body .inputRow .gadgetTrashBtn{margin:4px;}
+	#modal_body .rowOdd {background:#ccc;}
+		.modal_content .row div.time {font-weight:bold;margin:0 0 0 5px;font-size:11px;height:26px;line-height:26px;width:60px;}
+		#outlook_content .row div.time {font-weight:bold;margin:0 0 0 5px;font-size:11px;height:22px;line-height:22px;width:130px;}
+		#outlook_content .row div.location {padding:0 0 0 135px;font-size:11px;height:22px;line-height:22px;}
+	#modal_body input.noteInput {padding:2px 5px;width:400px;height:18px;border:1px solid #666;margin:4px 0;color:#000;}
+	
+	#weather_iframe{width:100%;height:100%;border:none;}
+	
+#modal_body #warning_ok,
+#modal_body #warning_cancel{margin-top:0;}
+
+#appts_search,
+#outlook_search{margin-top:0px;}
+	#appts_date_icon,
+	#outlook_date_icon{margin:2px 0 0 10px;}
+	
+#map_body {width:100%;height:300px;overflow:hidden;}
+#weather_body {width:100%;height:350px;overflow:hidden;}
+
+#modal_dialog #footer{margin:10px 0 0;}

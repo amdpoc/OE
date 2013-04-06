@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:dwr="http://www.directwebremoting.org/schema/spring-dwr"
+       xmlns:amq="http://activemq.apache.org/schema/core"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
+		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop-2.0.xsd
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx-2.0.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/util
+		http://www.springframework.org/schema/util/spring-util.xsd
+		http://www.directwebremoting.org/schema/spring-dwr
+		http://www.directwebremoting.org/schema/spring-dwr-3.0.xsd
+		http://activemq.apache.org/schema/core
+        http://activemq.apache.org/schema/core/activemq-core-5.3.0.xsd">
+
+
+    <bean id="custListDao" class="ilink.dao.IbatisCustListDao" scope="prototype">
+        <property name="sqlMapClient" ref="sqlMap"/>
+    </bean>
+
+    <bean id="refDao" class="ilink.dao.IbatisReferenceLoaderDao" scope="prototype">
+        <property name="sqlMapClient" ref="sqlMap"/>
+    </bean>
+
+    <bean id="custDetailsDao" class="ilink.dao.IbatisCustDetailsDao" scope="prototype">
+        <property name="sqlMapClient" ref="sqlMap"/>
+    </bean>
+
+    <bean id="custNotesDao" class="ilink.dao.IbatisCustNotesDao" scope="prototype">
+        <property name="sqlMapClient" ref="sqlMap"/>
+    </bean>
+
+    <bean id="proposalDao" class="ilink.dao.IbatisProposalDao" scope="prototype">
+        <property name="sqlMapClient" ref="sqlMap"/>
+    </bean>
+
+    <bean id="esignEnvelopeDao" class="ilink.dao.IbatisEsignEnvelopeDao" scope="prototype">
+        <property name="sqlMapClient" ref="sqlMap"/>
+    </bean>
+
+    <bean id="pdfGeneratorDao" class="ilink.dao.IbatisAdocsPdfGeneratorDao" scope="prototype">
+        <property name="sqlMapClient" ref="sqlMap"/>
+    </bean>
+
+    <!-- Ajax (DWR - Direct Web Remotin) configuration -->
+    <dwr:controller id="dwrController" debug="true"/>
+    <dwr:configuration>
+        <dwr:convert type="exception" class="java.lang.Exception"/>
+        <dwr:convert type="bean" class="java.lang.StackTraceElement"/>
+        <dwr:convert type="bean" class="ilink.domain.*"/>
+        <dwr:convert type="bean" class="ilink.domain.EsignProduct" javascript="EsignProduct"></dwr:convert>
+        <dwr:convert type="bean" class="ilink.domain.EsignBillingAccount" javascript="EsignBillingAccount"></dwr:convert>
+        <dwr:convert type="bean" class="ilink.domain.EsignEnvelope" javascript="EnvelopeTest"></dwr:convert>
+    </dwr:configuration>
+
+    <bean id="custNotesManager" class="ilink.service.CustNotesManagerImpl" scope="prototype">
+        <property name="custNotesDao" ref="custNotesDao"/>
+        <property name="creCustNoteDao" ref="creCustNoteDao"/>
+        <dwr:remote javascript="DwrCustNotesManager">
+            <dwr:include method="getCustNotesByCustId"/>
+            <dwr:include method="getRssNotesByCustId"/>
+            <dwr:include method="getCsoNotesByCustId"/>
+            <dwr:include method="getFnNotesByCustId"/>
+            <dwr:include method="getCustNotesTxByCustId"/>
+            <dwr:include method="createNewCustNote"/>
+        </dwr:remote>
+    </bean>
+
+    <bean id="custListManager" class="ilink.service.CustListManagerImpl" scope="prototype">
+        <property name="custListDao" ref="custListDao"/>
+        <dwr:remote javascript="DwrCustListManager">
+            <dwr:include method="getCustListPageDWR"/>
+            <dwr:include method="getCustListDWR"/>
+        </dwr:remote>
+    </bean>
+
+    <bean id="esignEnvelopeManager" class="ilink.service.EsignEnvelopeManagerImpl" scope="prototype">
+        <property name="esignEnvelopeDao" ref="esignEnvelopeDao"/>
+    </bean>
+
+    <bean id="custManager" class="ilink.service.CustManagerImpl" scope="prototype">
+        <property name="custDetailsDao" ref="custDetailsDao"/>
+        <property name="custNotesDao" ref="custNotesDao"/>
+        <property name="proposalDao" ref="proposalDao"/>
+        <property name="testContactEmailInd" value="true"/>
+        <property name="testContactEmail" value="natkot@gmail.com"/>
+        <dwr:remote javascript="DwrCustManager">
+            <dwr:include method="getCustDetails"/>
+            <dwr:include method="getCustBillingDetails"/>
+            <dwr:include method="getCustDetailsDWR"/>
+        </dwr:remote>
+    </bean>
+
+    <bean id="proposalManager" class="ilink.service.ProposalManagerImpl" scope="prototype">
+        <property name="proposalDao" ref="proposalDao"/>
+        <dwr:remote javascript="DwrProposalManager">
+            <dwr:include method="getProposalByCustomerId"/>
+            <dwr:include method="getROPProposalByCustomerId"/>
+            <dwr:include method="getPendingPublishByCustomerId"/>
+            <dwr:include method="saveProposalProductsListToSessionDWR"/>
+            <dwr:include method="saveNewEnvelopeNoProductsToSessionDWR"/>
+            <dwr:include method="getNewEnvelopeBillingInfoFromSessionDWR"/>
+        </dwr:remote>
+    </bean>
+
+    <bean id="signatureManager" class="ilink.service.SignatureManagerImpl" scope="prototype">
+        <property name="esignEnvelopeDao" ref="esignEnvelopeDao"/>
+        <dwr:remote javascript="DwrSignatureManager">
+            <dwr:include method="sendDocumentToSignDWR"/>
+        </dwr:remote>
+    </bean>
+
+   <bean id="pdfGeneratorManager" class="ilink.service.AdocsPdfGeneratorManagerImpl" scope="prototype">
+        <property name="esignEnvelopeDao" ref="esignEnvelopeDao"/>
+        <property name="pdfGeneratorDao" ref="pdfGeneratorDao"/>
+        <property name="genAdocsPdfDao" ref="genAdocsPdfDao"/>
+        <property name="pdfFolderPath" value="/kgnusr/rhd/ph2cweb/GenerationFolders/pdf/"/>
+        <!--property name="testInd" value="false"/-->
+        <property name="localPdfFolderPath" value="c:/GenerationFolders/pdf/" />
+        <property name="localTestPdfFilePath" value="2011/9/30/10125892.pdf"/>
+        <property name="localTestPdfFilePathROP" value="2012/02/09/10655349.pdf"/>
+
+        <dwr:remote javascript="DwrPdfGeneratorManager">
+            <dwr:include method="generateContractDWR"/>
+            <dwr:include method="getContractPdfPathDWR"/>
+        </dwr:remote>
+    </bean>
+
+     <bean id="pdfConverter" class="ilink.utils.PDFConverter">
+        <property name="outputPath" value="../webapps/esign/tmp/" />
+        <!--property name="outputPath" value="/kgnusr/rhd/ph2cweb/tomcat_6.0.20/webapps/esign/tmp/"/-->
+        <dwr:remote javascript="DwrPDFConverter">
+            <dwr:include method="convertPDF"/>
+        </dwr:remote>
+    </bean>
+
+    <bean id="sqlMap" class="org.springframework.orm.ibatis.SqlMapClientFactoryBean">
+        <property name="configLocation" value="classpath:iBatis-sql-map-config.xml"/>
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="${jdbc.driverClassName}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <property name="initialSize" value="3"/>
+        <property name="maxActive" value="15"/>
+        <property name="validationQuery" value="select 1 from dual"/>
+        <property name="maxIdle" value="5"/>
+        <property name="testOnBorrow" value="true"/>
+        <property name="testWhileIdle" value="true"/>
+        <property name="timeBetweenEvictionRunsMillis" value="10000"/>
+        <property name="minEvictableIdleTimeMillis" value="60000"/>
+    </bean>
+
+    <bean id="refLoader" class="ilink.utils.ReferenceTableLoader" init-method="init">
+        <property name="refDao" ref="refDao"/>
+        <dwr:remote javascript="DwrRefLoaderManager">
+            <dwr:include method="getCommunityList"/>
+        </dwr:remote>
+    </bean>
+
+    <bean id="titleManager" class="ilink.utils.TitleManager" scope="prototype">
+        <property name="custDetailsDao" ref="custDetailsDao"/>
+    </bean>
+
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="locations">
+            <list>
+                <value>classpath:jdbc.properties</value>
+            </list>
+        </property>
+    </bean>
+
+    <util:properties id="applicationProperties" location="WEB-INF/iLink.properties"/>
+
+    <bean id="appPropertyLoader" class="ilink.utils.iLinkPropertiesLoader">
+        <property name="applicationProperties" ref="applicationProperties"/>
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+
+    <bean id="emailSender" class="ilink.utils.IlinkEmailSender" scope="prototype">
+        <property name="smtpHost" value="rhdsmtp.rhd.com" />
+        <!--property name="smtpHost" value="144.163.94.115"/-->
+        <property name="testInd" value="false"/>
+        <property name="mngrEmail" value="Natalia.Kotliarsky@dexone.com"/>
+        <property name="mailFrom" value="iLinkOpportunitiesManagmentSystem@DoNot.Reply"/>
+    </bean>
+
+    <bean id="generalInfo" class="ilink.domain.GeneralInfo" scope="prototype">
+        <property name="serverName" value="sk3 EAST"/>
+        <property name="currentCCVersion" value="v140_5"/>
+        <property name="currentDEXVersion" value="eSign-Mobile 1415"/>
+        <property name="dataBase" value="EAST DB"/>
+    </bean>
+
+    <bean id="messageLoader" class="ilink.utils.MessageLoader">
+        <property name="messageSource" ref="messageSource"/>
+    </bean>
+
+    <bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
+        <property name="basename" value="messages"/>
+    </bean>
+
+    <!-- tracking -->
+    <bean id="trackingJmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+        <property name="connectionFactory">
+            <bean class="org.springframework.jms.connection.SingleConnectionFactory">
+                <property name="targetConnectionFactory">
+                    <amq:connectionFactory id="trackingJMSFactory" brokerURL="tcp://hpux38:61616"/>
+                </property>
+            </bean>
+        </property>
+    </bean>
+    <bean id="trackingMsgr" class="amdocs.ipad.tracking.TrackingMsgImpl">
+        <property name="destination">
+            <amq:topic id="trackingMSG" physicalName="kss.monitoring.messages"/>
+        </property>
+        <property name="jmsTemplate" ref="trackingJmsTemplate"/>
+    </bean>
+
+    <bean id="trackingManager" class="ilink.utils.JmsTrackingManager" scope="prototype">
+        <property name="trackingMsgr" ref="trackingMsgr"/>
+        <property name="currentServer" value="ph2cweb"/>
+        <property name="callerId" value="_esign_mobile"/>
+    </bean>
+
+  <bean id="dummyTrackingManager" class="ilink.utils.DummyTrackingManager"/>
+
+    
+   <bean id="docsignManager" class="ilink.docuSign.DocuSignManager" scope="prototype">
+        <property name="docsignService" ref="docsignService"/>
+        <property name="docuTestInd" value="true"/>
+        <property name="repEmail" value="richi.varma2@dexone.com"/>
+        <property name="responseUrl" value="https://ilink2.dexone.com/esign/customerList.htm?"/>
+   </bean>
+
+    <bean id="docsignService" class="ilink.docuSign.DocuSignService" scope="prototype">
+        <property name="systemUserName" value="rafi.lotem@dexone.com"/>
+        <property name="systemUserPassword" value="esign123"/>
+        <property name="domain" value="RHDMAIN"/>
+        <property name="systemUserIntegratorKey" value="DEXO-e8a8ca46-bcf0-47e4-a42b-4b00a314f3e3"/>
+        <property name="apiAccountId" value="09af9ca7-43d3-4022-b6dd-a74c53713959"/>
+        <property name="docusignURL" value="https://demo.docusign.net/API/3.0/api.asmx"/>
+    </bean>
+</beans>

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="2.4"
+	xmlns="http://java.sun.com/xml/ns/j2ee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee
+	http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd" >
+
+<servlet>
+	<servlet-name>ilink</servlet-name>
+	<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+	<load-on-startup>1</load-on-startup>
+</servlet>
+<servlet-mapping>
+	<servlet-name>ilink</servlet-name>
+	<url-pattern>*.htm</url-pattern>
+</servlet-mapping>
+
+<servlet>
+  <display-name>DWR Servlet</display-name>
+  <servlet-name>dwr</servlet-name>
+  <servlet-class>org.directwebremoting.spring.DwrSpringServlet</servlet-class>
+  <init-param>
+     <param-name>debug</param-name>
+     <param-value>true</param-value>
+  </init-param>
+</servlet>
+<servlet-mapping>
+  <servlet-name>dwr</servlet-name>
+  <url-pattern>/dwr/*</url-pattern>
+</servlet-mapping>
+
+ <servlet>
+  <display-name>Customer List Servlet</display-name>
+  <servlet-name>CustomerList</servlet-name>
+  <servlet-class>ilink.web.CustomerServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+  <servlet-name>CustomerList</servlet-name>
+  <url-pattern>/CustomerList/*</url-pattern>
+</servlet-mapping>
+<servlet>
+  <display-name>Product List Servlet</display-name>
+  <servlet-name>ProductList</servlet-name>
+  <servlet-class>ilink.web.ProductListServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+  <servlet-name>ProductList</servlet-name>
+  <url-pattern>/ProductList/*</url-pattern>
+</servlet-mapping>
+
+<!-- Include here all Spring configuration files for the context loader -->
+<context-param>
+	<param-name>contextConfigLocation</param-name>
+	<param-value>
+        /WEB-INF/applicationContext.xml
+		/WEB-INF/ilink-servlet.xml
+		/WEB-INF/ilink-security.xml
+        /WEB-INF/ilink-ws.xml
+	</param-value>
+</context-param>
+
+<listener>
+	<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+</listener>
+	
+<welcome-file-list>
+    <welcome-file>login.jsp</welcome-file>
+</welcome-file-list>
+
+<jsp-config>
+	<taglib>
+		<taglib-uri>/spring</taglib-uri>
+		<taglib-location>/WEB-INF/tld/spring-form.tld</taglib-location>
+	</taglib>
+</jsp-config>
+
+<filter>
+   <filter-name>springSecurityFilterChain</filter-name>
+   <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+</filter>
+
+<filter-mapping>
+   <filter-name>springSecurityFilterChain</filter-name>
+   <url-pattern>/*</url-pattern>
+</filter-mapping>
+
+<listener>
+   <listener-class>
+       org.springframework.security.ui.session.HttpSessionEventPublisher</listener-class>
+</listener>
+
+</web-app>

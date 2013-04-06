@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context-2.5.xsd">
+
+    <bean id="iLinkWSServiceBeanInterface" class="ilink.webservices.services.ILinkWSPortSoapBindingStub">       
+    </bean>
+
+    <bean id="iLinkWSInterface" class="ilink.webservices.services.ILinkWSLocator">
+        <property name="wsStub" ref="iLinkWSServiceBeanInterface"/>
+        <!--property name="ilinkWSPortAddress" value="http://hpux39:22300/ILINK_MOBILE_WS/services/ILINK_MOBILE?WSDL"/ ftb -->
+        <!--property name="ilinkWSPortAddress" value="http://hpux39:13000/ILINK_MOBILE_WS/services/ILINK_MOBILE?WSDL"/ -->
+        <!-- property name="ilinkWSPortAddress" value="http://tapp03:3800/ILINK_MOBILE_WS/services/ILINK_MOBILE?WSDL"/ -->
+        <!-- SK3 -->
+        <property name="ilinkWSPortAddress" value="http://hpux38:3800/ILINK_MOBILE_WS/services/ILINK_MOBILE?WSDL"/>
+        <!-- FTA WEST -->
+        <!-- property name="ilinkWSPortAddress" value="http://tapp04:12000/ILINK_MOBILE_WS/services/ILINK_MOBILE?WSDL"/ -->
+        <!--property name="ilinkWSPortAddress" value="http://hpux38:42100/ILINK_MOBILE_WS/services/ILINK_MOBILE?WSDL"/ st -->
+        <!--property name="ilinkWSPortAddress" value="http://hpux38:2400/ILINK_MOBILE_WS/services/ILINK_MOBILE?WSDL"/-->
+        <!-- property name="ilinkWSPortAddress" value="http://hpux38:12500/ILINK_MOBILE_WS/services/ILINK_MOBILE?WSDL"/   sk1 -->
+        <!-- fta east-->
+        <!--property name="ilinkWSPortAddress" value="http://hpux39:12000/ILINK_MOBILE_WS/services/ILINK_MOBILE?WSDL"/-->
+        <!--  fta west -->
+        <!--property name="ilinkWSPortAddress" value="http://tapp04:12000/ILINK_MOBILE_WS/services/ILINK_MOBILE?WSDL"/-->
+        <property name="wsNamespaceUri" value="http://amdocs/iam/ILINK_MOBILE_WS"/>
+        <property name="wsServiceName" value="ILINK_MOBILE_WS"/>
+        <property name="wsPortName" value="ILINK_MOBILE_WSPort"/>
+    </bean>
+
+    <bean id="creCustNoteDao" class="ilink.webservices.dao.WSCreCustNoteDao">
+        <property name="wsInterface" ref="iLinkWSInterface" />
+        <property name="outputClassName" value="ilink.webservices.datatypes.IlinkGeneralResponseType" />
+        <property name="inputClassName" value="ilink.webservices.datatypes.ILinkMobileCreCstNoteParamsType" />
+        <property name="methodName" value="creCstNote" />
+    </bean>
+
+    <bean id="genAdocsPdfDao" class="ilink.webservices.dao.WSGenerateAdocsPdfDao">
+        <property name="wsInterface" ref="iLinkWSInterface" />
+        <property name="outputClassName" value="ilink.webservices.datatypes.AddDocumentRequestOutput" />
+        <property name="inputClassName" value="ilink.webservices.datatypes.AddDocumentRequestInput" />
+        <property name="methodName" value="addDocumentRequest" />
+    </bean>
+
+
+</beans>

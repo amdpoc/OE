@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC
+    "-//iBATIS.com//DTD SQL Map 2.0//EN"
+    "http://www.ibatis.com/dtd/sql-map-2.dtd">
+<sqlMap>
+<cacheModel id="refLoaderCache" type="LRU">
+        <flushInterval hours="24" />
+        <property name="size" value="1000" />
+    </cacheModel>
+
+    <select id="getLogicalDate" resultClass="java.lang.String"  cacheModel="refLoaderCache">
+        SELECT TO_CHAR (logical_date, 'MM/DD/YYYY')
+          FROM op_logical_date
+         WHERE logical_date_type = 'O'
+	</select>
+
+    <resultMap id="communityListMap" class="ilink.domain.CommunityListItem">
+        <result property="communityName"    column="community_state_name" columnIndex="1"/>
+        <result property="communityId"    	column="community_id" columnIndex="2"/>
+	</resultMap>
+
+    <select id="getCommunityList" resultMap="communityListMap" parameterClass="java.lang.String" cacheModel="refLoaderCache">
+        SELECT   community_state_name, community_id
+            FROM community
+           WHERE UPPER (community_state_name) LIKE UPPER(#value#) || '%'
+        ORDER BY community_state_name
+	</select>
+
+    <resultMap id="omitAddrIndListMap" class="ilink.domain.AddressOmitIndListItem">
+        <result property="code"    column="code_value"/>
+        <result property="value"   column="decode_display"/>
+	</resultMap>
+
+    <select id="getOmitAddrInd" resultMap="omitAddrIndListMap" cacheModel="refLoaderCache">
+      SELECT   decode_display, code_value
+            FROM domain_decodes
+           WHERE domain_code = 'GNOADIND'
+        ORDER BY code_value
+	</select>
+
+	<resultMap id="productsListMap" class="ilink.domain.ProductDataType">
+        <result property="productDisplay"     column="PRODUCT"/>
+        <result property="productCode"    	  column="product_code"/>
+        <result property="productIssueNum"    column="product_issue_num" />
+        <result property="productName"        column="product_name" />
+        <result property="issueRelatedInd"    column="issue_related_ind" />
+        <result property="issueDate"          column="issue_date" />
+        <result property="issueDateDisplay"   column="issue_date_display" />
+	</resultMap>
+	<select id="getProductsList" resultMap="productsListMap" parameterClass="java.lang.String" cacheModel="refLoaderCache">
+SELECT    pi.product_name
+       || ' '
+       || pi.state_abbreviation
+       || ' - '
+       || pi.product_code
+       || ' '
+       || CASE
+             WHEN pi.product_issue_num = 999
+                THEN ' '
+             WHEN pi.nt_product_ind = 'Y'
+                THEN    TO_CHAR (pi.issue_date, 'MM/DD/YYYY')
+                     || ' - '
+                     || TO_CHAR (ADD_MONTHS (pi.issue_date, 12) - 1,
+                                 'MM/DD/YYYY'
+                                )
+             WHEN pi.product_issue_num != 999
+                THEN NVL (TO_CHAR (pi.issue_date, 'MM/YYYY'), ' ')
+          END product,
+       pi.product_code product_code, pi.product_issue_num product_issue_num,
+       pi.product_name product_name,
+       (CASE
+           WHEN pi.product_issue_num = 999
+              THEN 'N'
+           WHEN pi.product_issue_num != 999
+              THEN 'Y'
+        END
+       ) issue_related_ind,
+       CASE
+          WHEN pi.product_issue_num = 999
+             THEN ' '
+          WHEN pi.nt_product_ind = 'Y'
+             THEN NVL (TO_CHAR (pi.issue_date, 'MM/DD/YYYY'), ' ')
+          WHEN pi.product_issue_num != 999
+             THEN NVL (TO_CHAR (pi.issue_date, 'MM/DD/YYYY'), ' ')
+       END issue_date,
+         CASE
+          WHEN pi.product_issue_num = 999
+             THEN ' '
+          WHEN pi.nt_product_ind = 'Y'
+             THEN    TO_CHAR (pi.issue_date, 'MM/DD/YYYY')
+                  || ' - '
+                  || TO_CHAR (ADD_MONTHS (pi.issue_date, 12) - 1,
+                              'MM/DD/YYYY')
+          WHEN pi.product_issue_num != 999
+             THEN NVL (TO_CHAR (pi.issue_date, 'MM/YYYY'), ' ')
+       END issue_date_display
+  FROM product_issue pi, prd_curr_issue pci
+ WHERE pi.product_code = pci.product_code
+   AND pi.product_issue_num = pci.product_issue_num
+   AND pi.obsolete_prd_ind = 'N'
+   AND (   (UPPER (pi.product_name) LIKE ('%' || UPPER (#value#) || '%'))
+        OR (UPPER (pi.product_code) LIKE ('%' || UPPER (#value#) || '%'))
+        OR (TO_CHAR (pi.issue_date, 'MM/YYYY') LIKE ('%' || #value# || '%'))
+       )
+   AND ROWNUM &lt; 101
+	</select>
+</sqlMap>

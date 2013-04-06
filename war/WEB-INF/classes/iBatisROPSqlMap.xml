@@ -1,0 +1,465 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+<sqlMap>
+
+    <resultMap id="proposalTypeROP" class="ilink.domain.ProposalDataTypeROP">
+        <result property="paymentType"				column="payment_type"/>
+        <result property="customerId"				column="customer_id"/>
+        <result property="businessName"   			column="business_name"/>
+        <result property="billingAccountId"			column="billing_account_id"/>
+        <result property="billingAccountName"		column="billing_account_name"/>
+        <result property="billingPhoneNo"			column="billing_phone_no"/>
+        <result property="billingAddress"			column="billing_address"/>
+        <result property="productName"				column="product_name"/>
+        <result property="productCode"				column="product_code"/>
+        <result property="productIssueDate"			column="product_issue_date"/>
+        <result property="productIssueDateDisplay"  column="product_issue_date_display"/>
+        <result property="barcodePhoneNo"			column="barcode_tn"/>
+        <result property="productBillingMonthly"	column="product_billing_monthly"/>
+        <result property="productStatus"			column="product_status"/>
+        <result property="repId"					column="rep_id"/>
+        <result property="internetStartDate"		column="internet_start_date"/>
+        <result property="internetEndDate"			column="internet_end_date"/>
+        <result property="emailAddress"				column="email_address"/>
+        <result property="issueRelatedInd"			column="issue_related_ind"/>
+        <result property="productIssueNumber"		column="product_issue_num"/>
+    </resultMap>
+
+    <select id="getROPProposalByCustomerId" resultMap="proposalTypeROP" parameterClass="java.util.HashMap">
+        SELECT
+            'A' payment_type,
+            i.customer_id customer_id,
+            c.business_name business_name,
+            ba.billing_account_id billing_account_id,
+            ba.billing_name billing_account_name,
+            DECODE (ct.contact_tn_npa, NULL, ' ', '(' || ct.contact_tn_npa || ') ' || ct.contact_tn_cop || '-' || ct.contact_tn_line_no) billing_phone_no,
+            NVL (a.house_no, '')
+            || ' '
+            || NVL (a.directional, '')
+            || ' '
+            || NVL (a.street_name, '')
+            || ' '
+            || NVL (a.post_directional, '')
+            || ' '
+            || NVL (a.suite, '')
+            || ' '
+            || NVL (a.po_box, '')
+            || DECODE (TRIM (a.community_name_ovrd), NULL, NVL (cm.community_name, ''), a.community_name_ovrd)
+            || ' '
+            || DECODE (TRIM (a.state_override), NULL, NVL (cm.state_abbr, ''), a.state_override)
+            || ' '
+            || DECODE (TRIM (a.zip_four), NULL, NVL (a.zip_five, ' '), a.zip_five || '-' || a.zip_four) billing_address,
+            pi.product_name product_name,
+            i.product_code product_code,
+            CASE
+                WHEN pi.product_issue_num = 999
+                THEN ' '
+                WHEN pi.nt_product_ind = 'Y'
+                THEN NVL (TO_CHAR (pi.issue_date, 'MM/DD/YYYY'), ' ')
+                WHEN pi.product_issue_num != 999
+                THEN NVL (TO_CHAR (pi.issue_date, 'MM/DD/YYYY'), ' ')
+            END product_issue_date,
+            CASE
+                WHEN pi.product_issue_num = 999
+                THEN ' '
+                WHEN pi.nt_product_ind = 'Y'
+                THEN TO_CHAR(pi.ISSUE_DATE, 'MM/DD/YYYY') || ' - ' || TO_CHAR(ADD_MONTHS(pi.ISSUE_DATE, 12)-1, 'MM/DD/YYYY')
+                WHEN pi.product_issue_num != 999
+                THEN NVL (TO_CHAR (pi.issue_date, 'MM/YYYY'), ' ')
+            END product_issue_date_display,
+            DECODE (ct.contact_tn_npa, NULL, ' ', '(' || ct.contact_tn_npa || ') ' || ct.contact_tn_cop || '-' || ct.contact_tn_line_no) barcode_tn,
+            CASE
+                WHEN MAX (NVL (pp.incentive_pct, 0)) &gt; 0
+                THEN SUM (DECODE (i.action_code, 'O', 0, DECODE (i.nt_item_state, 7, 0, i.item_nisd_amt)))
+                - ROUND ((MAX (NVL (pp.incentive_pct, 0)) * SUM (DECODE (i.action_code, 'O', 0, DECODE (i.nt_item_state, 7, 0, i.item_nisd_amt)))), 2)
+                WHEN MAX (NVL (pp.incentive_pct, 0)) &lt;= 0 AND SUM (DECODE (i.action_code, 'O', 0, DECODE (i.nt_item_state, 7, 0, i.item_nisd_amt))) &gt; 0
+                THEN ROUND (SUM (DECODE (i.action_code, 'O', 0, DECODE (i.nt_item_state, 7, 0, i.item_nisd_amt)))
+                - MAX (NVL (pp.incentive_amt, 0)) * SUM (DECODE (i.action_code,'O', 0, DECODE (i.nt_item_state,7, 0,i.item_nisd_amt)))
+                / SUM (DECODE (i.action_code, 'O', 0, DECODE (i.nt_item_state,7, 0, i.item_nisd_amt))
+                ),2
+                )
+                ELSE SUM (DECODE (i.action_code,'O', 0,DECODE (i.nt_item_state, 7, 0, i.item_nisd_amt)))
+            END product_billing_monthly,
+            DECODE (prd.product_issue_num, 999, 'A', prd.retirement_status) || DECODE (prd.prep_status, 'P', '-P', '') product_status,
+            asgn.rep_id rep_id,
+            TO_CHAR (i.pub_req_start_date, 'MM/DD/YYYY') internet_start_date,
+            TO_CHAR (i.pub_req_end_date, 'MM/DD/YYYY') internet_end_date,
+            ct.e_mail_address email_address,
+            i.issue_related_ind issue_related_ind,
+            pi.product_issue_num product_issue_num
+        FROM
+            prep_item i,
+            product_issue pi,
+            prd_curr_issue pci,
+            product_type pt,
+            product_proposal pp,
+            product prd,
+            customer c,
+            contact ct,
+            billing_account ba,
+            community cm,
+            address a,
+            fn_account fn,
+            assignment asgn
+        WHERE
+            i.customer_id = #custId#
+            AND pp.proposal_id = #proposalId#
+            AND asgn.rep_id = #repId#
+            AND i.product_code = pi.product_code
+            AND pci.product_code = pi.product_code
+            AND i.product_issue_num = pci.product_issue_num
+            AND pi.product_issue_num = pci.product_issue_num
+            AND pt.product_type = pi.product_type
+            AND i.proposal_id = pp.proposal_id
+            AND pp.customer_id = i.customer_id
+            AND pp.product_code = i.product_code
+            AND pp.product_issue_num = i.product_issue_num
+            AND prd.product_issue_num = i.product_issue_num
+            AND prd.product_code = i.product_code
+            AND prd.customer_id = i.customer_id
+            AND prd.assignment_id = asgn.assignment_id
+            AND i.last_version_ind = 'Y'
+            AND c.customer_id = i.customer_id
+            AND ba.contact_id = ct.contact_id(+)
+            AND ba.BILLING_ADDR_ID = a.address_id(+)
+            AND a.community_id = cm.community_id(+)
+            AND ba.billing_account_id(+) = i.account_id
+            AND fn.account_id(+) = i.account_id
+            AND fn.WO_IND = 'N'
+            AND (fn.OLDEST_DUE_DATE is null OR fn.OLDEST_DUE_DATE &gt;= SYSDATE)
+            AND (i.issue_related_ind = 'Y'
+                AND (i.action_code IN ('P', 'I', 'E', 'C') OR (i.action_code = 'O' AND i.item_id &lt; 3000001))
+                OR (i.issue_related_ind = 'N' AND (i.nt_item_state IN (1, 11) OR (i.nt_item_state = 7 AND i.action_code_rsn &lt;&gt; 'NR' AND i.prev_nt_state IN (1, 2, 5, 11))))
+                )
+        GROUP BY
+            i.customer_id,
+            ct.contact_tn_npa,
+            c.business_name,
+            ba.billing_account_id,
+            ba.billing_name,
+            '('
+            || ct.contact_tn_npa
+            || ') '
+            || ct.contact_tn_cop
+            || '-'
+            || ct.contact_tn_line_no,
+            NVL (a.house_no, '')
+            || ' '
+            || NVL (a.directional, '')
+            || ' '
+            || NVL (a.street_name, '')
+            || ' '
+            || NVL (a.post_directional, '')
+            || ' '
+            || NVL (a.suite, '')
+            || ' '
+            || NVL (a.po_box, '')
+            || DECODE (TRIM (a.community_name_ovrd),
+            NULL, NVL (cm.community_name, ''),
+            a.community_name_ovrd
+            )
+            || ' '
+            || DECODE (TRIM (a.state_override),
+            NULL, NVL (cm.state_abbr, ''),
+            a.state_override
+            )
+            || ' '
+            || DECODE (TRIM (a.zip_four),
+            NULL, NVL (a.zip_five, ' '),
+            a.zip_five || '-' || a.zip_four
+            ),
+            pi.product_name,
+            i.product_code,
+            DECODE (prd.product_issue_num, 999, 'A', prd.retirement_status)
+            || DECODE (prd.prep_status, 'P', '-P', ''),
+            asgn.rep_id,
+            NVL (TO_CHAR (pi.issue_date, 'MM/YYYY'), ' '),
+            '('
+            || ct.contact_tn_npa
+            || ') '
+            || ct.contact_tn_cop
+            || ' - '
+            || ct.contact_tn_line_no,
+            i.pub_req_start_date,
+            i.pub_req_end_date,
+            ct.e_mail_address,
+            i.issue_related_ind,
+            pi.product_issue_num,
+            pi.nt_product_ind,
+            TO_CHAR(pi.ISSUE_DATE, 'MM/DD/YYYY'),
+            TO_CHAR(ADD_MONTHS(pi.ISSUE_DATE, 12)-1, 'MM/DD/YYYY')
+        UNION
+        SELECT
+            'A' payment_type,
+            i.customer_id customer_id, c.business_name business_name,
+            ba.billing_account_id billing_account_id,
+            ba.billing_name billing_account_name,
+            DECODE (ct.contact_tn_npa,
+            NULL, ' ',
+            '('
+            || ct.contact_tn_npa
+            || ') '
+            || ct.contact_tn_cop
+            || '-'
+            || ct.contact_tn_line_no
+            ) billing_phone_no,
+            NVL (a.house_no, '')
+            || ' '
+            || NVL (a.directional, '')
+            || ' '
+            || NVL (a.street_name, '')
+            || ' '
+            || NVL (a.post_directional, '')
+            || ' '
+            || NVL (a.suite, '')
+            || ' '
+            || NVL (a.po_box, '')
+            || DECODE (TRIM (a.community_name_ovrd),NULL, NVL (cm.community_name, ''),a.community_name_ovrd)
+            || ' '
+            || DECODE (TRIM (a.state_override),NULL, NVL (cm.state_abbr, ''),a.state_override)
+            || ' '
+            || DECODE (TRIM (a.zip_four),NULL, NVL (a.zip_five, ' '),a.zip_five || '-' || a.zip_four) billing_address,
+            pi.product_name product_name, i.product_code product_code,
+            CASE
+            WHEN pi.product_issue_num = 999
+            THEN ' '
+            WHEN pi.nt_product_ind = 'Y'
+            THEN NVL (TO_CHAR (pi.issue_date, 'MM/DD/YYYY'), ' ')
+            WHEN pi.product_issue_num != 999
+            THEN NVL (TO_CHAR (pi.issue_date, 'MM/DD/YYYY'), ' ')
+            END product_issue_date,
+            CASE
+            WHEN pi.product_issue_num = 999
+            THEN ' '
+            WHEN pi.nt_product_ind = 'Y'
+            THEN TO_CHAR(pi.ISSUE_DATE, 'MM/DD/YYYY') || ' - ' || TO_CHAR(ADD_MONTHS(pi.ISSUE_DATE, 12)-1, 'MM/DD/YYYY')
+            WHEN pi.product_issue_num != 999
+            THEN NVL (TO_CHAR (pi.issue_date, 'MM/YYYY'), ' ')
+            END product_issue_date_display,
+            DECODE (ct.contact_tn_npa,
+            NULL, '',
+            '('
+            || ct.contact_tn_npa
+            || ') '
+            || ct.contact_tn_cop
+            || '-'
+            || ct.contact_tn_line_no
+            ) barcode_tn,
+            CASE
+            WHEN SUM (DECODE (i.action_code,
+            'O', 0,
+            DECODE (i.nt_item_state, 7, 0, i.item_nisd_amt)
+            )
+            ) &gt; 0
+            THEN ROUND (  SUM (DECODE (i.action_code,
+            'O', 0,
+            DECODE (i.nt_item_state,
+            7, 0,
+            i.item_nisd_amt
+            )
+            )
+            )
+            -   MAX (NVL (pd.incentive_amt, 0))
+            * SUM (DECODE (i.action_code,
+            'O', 0,
+            DECODE (i.nt_item_state,
+            7, 0,
+            i.item_nisd_amt
+            )
+            )
+            )
+            / SUM (DECODE (i.action_code,
+            'O', 0,
+            DECODE (i.nt_item_state,
+            7, 0,
+            i.item_nisd_amt
+            )
+            )
+            ),
+            2
+            )
+            ELSE SUM (DECODE (i.action_code,
+            'O', 0,
+            DECODE (i.nt_item_state, 7, 0, i.item_nisd_amt)
+            )
+            )
+            END product_billing_monthly,
+            DECODE (prd.product_issue_num,
+            999, 'A',
+            prd.retirement_status
+            )
+            || DECODE (prd.product_status, 'P', '-P', '') product_status,
+            asgn.rep_id rep_id,
+            TO_CHAR (i.pub_req_start_date, 'MM/DD/YYYY') internet_start_date,
+            TO_CHAR (i.pub_req_end_date, 'MM/DD/YYYY') internet_end_date,
+            ct.e_mail_address email_address,
+            i.issue_related_ind issue_related_ind,
+            pi.product_issue_num product_issue_num
+        FROM
+            item i,
+            product_issue pi,
+            prd_curr_issue pci,
+            product_type pt,
+            product_incentive_dist pd,
+            product prd,
+            customer c,
+            contact ct,
+            billing_account ba,
+            community cm,
+            address a,
+            fn_account fn,
+            assignment asgn
+        WHERE
+            i.customer_id = #custId#
+            AND asgn.rep_id = #repId#
+            AND i.product_code = pi.product_code
+            AND pci.product_code = pi.product_code
+            AND i.product_issue_num = pci.product_issue_num
+            AND pi.product_issue_num = pci.product_issue_num
+            AND pt.product_type = pi.product_type
+            AND pd.customer_id(+) = i.customer_id
+            AND pd.product_code(+) = i.product_code
+            AND pd.product_issue_num(+)= i.product_issue_num
+            AND pd.account_id(+) = i.account_id
+            AND prd.product_issue_num = i.product_issue_num
+            AND prd.product_code = i.product_code
+            AND prd.customer_id = i.customer_id
+            AND prd.assignment_id = asgn.assignment_id
+            AND i.last_version_ind = 'Y'
+            AND c.customer_id = i.customer_id
+            AND ba.contact_id = ct.contact_id(+)
+            AND ba.BILLING_ADDR_ID = a.address_id(+)
+            AND a.community_id = cm.community_id(+)
+            AND ba.billing_account_id(+) = i.account_id
+            AND fn.account_id(+) = i.account_id
+            AND fn.WO_IND = 'N'
+            AND (fn.OLDEST_DUE_DATE is null OR fn.OLDEST_DUE_DATE &gt;= SYSDATE)
+            AND (       i.issue_related_ind = 'Y'
+            AND (   i.action_code IN ('P', 'I', 'E', 'C')
+            OR (i.action_code = 'O' AND i.item_id &lt; 3000001)
+            )
+            OR (    i.issue_related_ind = 'N'
+            AND (   i.nt_item_state IN (1, 11)
+            OR (    i.nt_item_state = 7
+            AND i.action_code_rsn &lt;&gt; 'NR'
+            AND i.prev_nt_state IN (1, 2, 5, 11)
+            )
+            )
+            )
+            )
+            AND NOT EXISTS (
+            SELECT 1
+            FROM prep_item pi
+            ,product_proposal pp
+            WHERE pi.customer_id = i.customer_id
+            AND pi.product_code = i.product_code
+            AND pi.product_issue_num = i.product_issue_num
+            AND pi.proposal_id = 1
+            AND pp.customer_id = i.customer_id
+            AND pp.product_code = i.product_code
+            AND pp.product_issue_num = i.product_issue_num
+            AND pp.proposal_id = 1)
+        GROUP BY
+            i.customer_id,
+            ct.contact_tn_npa,
+            c.business_name,
+            ba.billing_account_id,
+            ba.billing_name,
+            '('
+            || ct.contact_tn_npa
+            || ') '
+            || ct.contact_tn_cop
+            || '-'
+            || ct.contact_tn_line_no,
+            NVL (a.house_no, '')
+            || ' '
+            || NVL (a.directional, '')
+            || ' '
+            || NVL (a.street_name, '')
+            || ' '
+            || NVL (a.post_directional, '')
+            || ' '
+            || NVL (a.suite, '')
+            || ' '
+            || NVL (a.po_box, '')
+            || DECODE (TRIM (a.community_name_ovrd),NULL, NVL (cm.community_name, ''),a.community_name_ovrd)
+            || ' '
+            || DECODE (TRIM (a.state_override),NULL, NVL (cm.state_abbr, ''),a.state_override)
+            || ' '
+            || DECODE (TRIM (a.zip_four),NULL, NVL (a.zip_five, ' '),a.zip_five || '-' || a.zip_four),
+            pi.product_name,
+            i.product_code,
+            DECODE (prd.product_issue_num, 999, 'A', prd.retirement_status)
+            || DECODE (prd.product_status, 'P', '-P', ''),
+            asgn.rep_id,
+            NVL (TO_CHAR (pi.issue_date, 'MM/YYYY'), ' '),
+            '('
+            || ct.contact_tn_npa
+            || ') '
+            || ct.contact_tn_cop
+            || ' - '
+            || ct.contact_tn_line_no,
+            i.pub_req_start_date,
+            i.pub_req_end_date,
+            ct.e_mail_address,
+            i.issue_related_ind,
+            pi.product_issue_num,
+            pi.nt_product_ind,
+            TO_CHAR(pi.ISSUE_DATE, 'MM/DD/YYYY'),
+            TO_CHAR(ADD_MONTHS(pi.ISSUE_DATE, 12)-1, 'MM/DD/YYYY')
+        UNION
+        SELECT
+            case
+                when fn.wo_ind = 'N'
+                then
+                    case
+                        when fn.OLDEST_DUE_DATE &lt; SYSDATE
+                        then 'P'
+                        else 'A'
+                    end
+                else 'W'
+            end payment_type,
+            ba.customer_id customer_id,
+            c.business_name business_name,
+            ba.billing_account_id billing_account_id,
+            ba.billing_name billing_account_name,
+            '('
+            || ct.contact_tn_npa
+            || ') '
+            || ct.contact_tn_cop
+            || '-'
+            || ct.contact_tn_line_no billing_phone_no,
+            'x' billing_address,
+            'x' product_name,
+            'x' product_code,
+            'x' product_issue_date,
+            'x' product_issue_date_display,
+            '('
+            || ct.contact_tn_npa
+            || ') '
+            || ct.contact_tn_cop
+            || ' - '
+            || ct.contact_tn_line_no barcode_tn,
+            fn.ar_balance product_billing_monthly,
+            'x' product_status,
+            9999 rep_id,
+            null internet_start_date,
+            null internet_end_date,
+            'x' email_address,
+            'x' issue_related_ind,
+            9999 product_issue_num
+        FROM
+            customer c,
+            contact ct,
+            billing_account ba,
+            fn_account fn
+        WHERE
+            ba.customer_id = #custId#
+            and fn.account_id = ba.BILLING_ACCOUNT_ID
+            AND ba.contact_id = ct.contact_id(+)
+            and ct.customer_id = c.customer_id
+
+            AND fn.account_id(+) = ba.BILLING_ACCOUNT_ID
+            AND (fn.WO_IND = 'Y' OR (fn.WO_IND = 'N' AND fn.OLDEST_DUE_DATE &lt; SYSDATE))
+    </select>
+</sqlMap>

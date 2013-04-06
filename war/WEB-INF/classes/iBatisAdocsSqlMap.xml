@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+<sqlMap>
+<resultMap id="adocsPdfEntity" class="ilink.domain.AdocsPdfEntity">
+    <result property="letterFileIndex" column="letter_file_index"/>
+    <result property="letterStatus" column="letter_status"/>
+    <result property="errorMessage" column="error_message"/>
+</resultMap>
+<select id="getAdocsPdfPath" resultMap="adocsPdfEntity" parameterClass="long">
+    SELECT lr.letter_file_index, lr.letter_status, le.error_message
+      FROM letter_request lr, letter_req_error le
+     WHERE lr.letter_request_id = #requestId# AND le.letter_request_id(+) =
+                                                              lr.letter_request_id
+</select>
+</sqlMap>

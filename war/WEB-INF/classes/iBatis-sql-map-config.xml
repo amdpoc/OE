@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMapConfig PUBLIC
+"-//iBATIS.com//DTD SQL Map Config 2.0//EN"
+"http://www.ibatis.com/dtd/sql-map-config-2.dtd">
+
+<sqlMapConfig>
+  <settings 
+	enhancementEnabled="true"
+	errorTracingEnabled="true"
+	lazyLoadingEnabled="true"
+    maxTransactions="32" maxRequests="512"
+    maxSessions="128" 
+    cacheModelsEnabled="true"
+	useStatementNamespaces="true" />
+  <sqlMap resource="iBatisReferenceLoaderSqlMap.xml" />
+  <sqlMap resource="iBatisAmdocsEmployeeSqlMap.xml" /> 
+  <sqlMap resource="iBatisCustDetailsSqlMap.xml" />
+  <sqlMap resource="iBatisCustListSqlMap.xml" />
+  <sqlMap resource="iBatisCustNotesSqlMap.xml" />
+  <sqlMap resource="iBatisESignSqlMap.xml" />
+  <sqlMap resource="iBatisROPSqlMap.xml" />
+  <sqlMap resource="iBatisESignEnvelopeSqlMap.xml" />
+  <sqlMap resource="iBatisAdocsSqlMap.xml" />
+</sqlMapConfig>

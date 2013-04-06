@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+<sqlMap>
+    <insert id="insertEnvelope" parameterClass="ilink.domain.EsignEnvelope">
+        <selectKey resultClass="double" keyProperty="esignEnvelopeId">
+        SELECT esign_envelopes_1sq.NEXTVAL as esignEnvelopeId FROM DUAL
+        </selectKey>
+        INSERT INTO esign_envelopes
+            (esign_envelope_id, esign_envelope_name,
+            customer_id, esign_envelope_status, business_name,
+            contact_title, contact_email, ctcr_online_prog_dt,
+            ctcr_online_prog_id, ctcr_online_oper_id, ctcr_sys_cre_dt,
+            rep_id, contact_name,
+            signature_date, proposal_id,
+            envelope_type, street_address, city, state_abbr, zip_five, zip_four, new_renewal_ind
+            )
+        VALUES
+            (#esignEnvelopeId#, #esignEnvelopeName#,
+            #customerId#, #esignEnvelopeStatus#, #businessName#,
+            #contactTitle#, #contactEmail#, SYSDATE,
+            'ESIGN', #repId#, SYSDATE,
+            #repId#, #contactName#,
+            TO_DATE (#signatureDate#, 'MM/DD/YYYY'),#proposalId#,
+            #envelopeType#, #streetAddress#, #city#, #stateAbbr#, #zipFive#, #zipFour#, #newRenewalInd#
+            )
+    </insert>
+    <insert id="insertBAccount" parameterClass="ilink.domain.EsignBillingAccount">
+    <selectKey resultClass="double" keyProperty="esignBAccountId">
+         SELECT ESIGN_BILLING_ACCOUNTS_1SQ.NEXTVAL as esignBAccountId FROM DUAL 
+    </selectKey>
+    INSERT INTO esign_billing_accounts
+            (esign_envelope_id, esign_ba_id, fin_ba_id, ba_name, ba_tn_npa,
+             ba_tn_cop, ba_tn_line_no, ba_address, ba_source,
+             ctcr_online_prog_dt, ctcr_online_prog_id, ctcr_online_oper_id,
+             ctcr_sys_cre_dt, ba_contact_name, ba_contact_title,
+             ba_contact_email,
+             signature_date, type_of_payment, amount_to_apply
+            )
+     VALUES (#esignEnvelopeId#, #esignBAccountId#, #finBAccountId#, #baAccountName#, #baTn#,
+             #baCop#, #baLineNo#, #baAddress#,
+             #baSource#, sysdate, 'ESIGN',
+             #baRepId#, sysdate, #baContactName#,
+             #baContactTitle#, #baContactEmail#,
+             TO_DATE (#signatureDate#, 'MM/DD/YYYY'), #paymentType#, #amountToApply#
+            )
+
+    </insert>
+    <insert id="insertBAProduct" parameterClass="ilink.domain.EsignProduct">
+    INSERT INTO esign_products
+            (product_code, product_name, issue_date,
+             start_date,
+             end_date,
+             monthly_billing, esign_ba_id, esign_envelope_id,
+             ctcr_online_prog_dt, ctcr_online_prog_id, ctcr_online_oper_id,
+             ctcr_sys_cre_dt, issue_related_ind, product_source, num_of_months, amount_to_apply
+            )
+     VALUES (#productCode#, #productName#, #issueDate#,
+             TO_DATE (#startDate#, 'MM/DD/YYYY'),
+             TO_DATE (#endDate#, 'MM/DD/YYYY'),
+             #monthlyBilling#, #esignBAccountId#, #esignEnvelopeId#,
+             sysdate, 'ESIGN', #repId#,sysdate,
+              #issueRelatedInd#, #productSource#, #numOfMonths#, #amountToApply#
+            )
+    </insert>
+    <update id="updateEnvelopeStatus">
+         UPDATE esign_envelopes
+            SET esign_envelope_status = #status#,
+                CTCR_SYS_UPD_DT = SYSDATE
+          WHERE esign_envelope_id = #envelopeId#
+      </update>
+    <update id="updateEnvelopeContactInfo">
+         UPDATE esign_envelopes
+            SET CONTACT_NAME =#contactName#,
+                CONTACT_EMAIL=#contactEmail#,
+                CTCR_SYS_UPD_DT = SYSDATE
+          WHERE esign_envelope_id = #envelopeId#
+      </update>
+     <update id="updateEnvelopeDocusignInfo">
+           UPDATE esign_envelopes
+            SET DOCUSIGN_ENVELOPE_ID=#docusignEnvelopeId#,
+                DOCUSIGN_ENVELOPE_STATUS=#status#,
+                CTCR_SYS_UPD_DT = SYSDATE
+          WHERE esign_envelope_id = #envelopeId#
+      </update>
+      <update id="updateEnvelopeDocusignStatusWithError">
+           UPDATE esign_envelopes
+            SET DOCUSIGN_ENVELOPE_STATUS=#status#,
+                GENERATED_PDF_ERROR=#error#,
+                CTCR_SYS_UPD_DT = SYSDATE
+          WHERE esign_envelope_id = #envelopeId#
+      </update>
+      <update id="updateEnvelopeStatusAndPdfPath">
+         UPDATE esign_envelopes
+            SET esign_envelope_status = #status#,
+                GENERATED_PDF_FILE = #pdfPath#,
+                CTCR_SYS_UPD_DT = SYSDATE
+          WHERE esign_envelope_id = #envelopeId#
+      </update>
+     <update id="updateEnvelopeWithError">
+         UPDATE esign_envelopes
+            SET esign_envelope_status = 'FAILED', GENERATED_PDF_ERROR = #error#,
+                CTCR_SYS_UPD_DT = SYSDATE
+          WHERE esign_envelope_id = #envelopeId#
+      </update>
+      <update id="updateEnvelopeStatusWithError">
+         UPDATE esign_envelopes
+            SET esign_envelope_status = #status#, GENERATED_PDF_ERROR = #error#,
+                CTCR_SYS_UPD_DT = SYSDATE
+          WHERE esign_envelope_id = #envelopeId#
+      </update>
+    </sqlMap>

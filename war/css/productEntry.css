@@ -1,0 +1,307 @@
+/*-----------------*/
+/* Styles for tags */
+/*-----------------*/
+body
+{
+	//font-size: 9pt;
+	//font-family: "Verdana", "Arial", sans;
+	//color: #2e2b2b;
+	vertical-align: top;
+}
+
+#productEntryPage
+{
+    width:100%;
+    background-color: #ffffff;
+    padding: 5px;
+}
+
+.general_Panel, .productEntryAppearances_Panel, .productEntryAttributes_Panel
+{
+    width:95%;
+    vertical-align: top;
+    padding: 3px;
+}
+
+.general_DataWrapper
+{
+	padding: 5px;
+	border: 1px solid #e5e5e5;
+	overflow: auto;
+}
+
+
+.productEntryAppearances_DataWrapper
+{
+    width:100%;
+    overflow-x: auto;
+}
+
+
+.productAppearanceTableMain
+{
+	padding:5px;
+	border: 1px solid #e5e5e5;
+}
+
+.attributesDiv
+{
+    border: 1px solid #e5e5e5;
+    padding:5px;
+    overflow: auto;
+}
+
+.appearanceDiv
+{
+   overflow: auto;
+}
+
+.appearanceContentSet
+{
+    width:70%;
+    border: 1px solid #e5e5e5;
+    margin-bottom:50px;
+}
+
+.appearanceSet
+{
+    border: 1px solid #e5e5e5;
+    margin-bottom:50px;
+    width:25%;
+}
+.generalCell, .attributeCell
+{
+    width:18%;
+    padding:7px;
+}
+
+.appearanceCell
+{
+    width:100%;
+    padding:3px;
+    overflow: hidden;
+}
+
+.appearanceContentCell
+{
+    width:30%;
+    padding:3px;
+    overflow: hidden;
+}
+
+.generalCell input, .attributeCell input, .appearanceCell input , .appearanceContentCell input
+{
+    width:100px;
+}
+
+
+
+
+/* visibility options - even if the element is not visible it uses space on the page */
+/* visible  - The element is visible. This is default */
+/* hidden   - The element is not visible, but still affects layout */
+/* collapse - When used on a table row or cell, the element is not visible (same as "hidden") */
+/* inherit  - The value of the visibility property is inherited from parent element */
+
+/* display options */
+/* none - hides the entire element */
+
+
+
+.dropDownCol1
+{
+	width:50px;
+	color: red;
+}
+
+.readOnlyInput
+{
+	
+}
+
+.updateInput
+{
+	
+}
+
+
+
+#drop_down, .dd_item
+{
+	background-color: #ffffff;
+}
+
+
+
+.productEntryAppearances_DataRow td input
+{
+   width: 100px;
+}
+
+.productAppearanceTableMain
+{
+	width:100%;
+}
+
+.productAppearanceTableMain td
+{
+    padding: 3px 3px 3px 3px;
+    vertical-align: top;
+}
+
+
+
+
+.radioButtonTd
+{
+	width:3%;
+	vertical-align: middle;
+}
+
+.appearanceContentTd, .appearanceTd
+{
+	width:40%;
+}
+.tbGeneral1, .tbGeneral2, .tbGeneral3 
+{
+	width:30%;
+	padding:3px;
+	border: 1px solid #e5e5e5;
+}
+
+
+
+#tbGeneralMain, #tbGeneralMain td
+{
+	border: 2px solid red;
+}
+
+
+
+#end_time_div
+{
+	border: none;
+}
+
+#end_time_btn
+{
+	border: 2px solid red;
+	height:20px;
+}
+
+
+#drop_down
+{
+	border: 2px solid #5bab94;
+
+}
+
+.height90
+{
+	height:90px;
+}
+
+.width90
+{
+	width:90px;
+}
+
+
+
+.scroller_native
+{
+	border: 3px solid red;
+	overflow-x:auto;
+}
+
+.dd_item div
+{
+ color: red;
+ border: 1px solid blue;
+ display: inline-block;
+}
+
+.dd_item
+{
+	list-style-type: none;
+	width:100%;
+}
+
+.column1,
+.column2
+{
+	width:30%;
+}
+
+.column3
+{
+	width:29%;
+}
+
+#hidden_element
+{
+	display:none;
+}
+
+.fleft{float:left;}
+.fright{float:right;}
+
+.labelTd
+{
+	font-weight:bold;
+	color: #555050;
+}
+
+.mandatoryLabelTd
+{
+	font-weight:bold;
+	color: #555050;
+}
+
+.dropDownArrow
+ {
+    //background-image: url(productEntryImages/dropDownArrow.gif);
+    background-image: url(ui-lightness/images/ui-icons_fad200_256x240.png);
+    background-position: -64px -16px;
+    background-repeat: no-repeat;
+    //width: 16px;
+    //height: 16px;
+    /*display: block;*/
+    //text-indent: -99999px;
+    //overflow: hidden;
+    padding-left: 30px;
+    //padding-top: 15px;
+    padding-bottom: 30px;
+ }
+
+
+.mandatoryIconShow
+{
+	font-weight:bold;
+	color: red;
+}
+
+.mandatoryIconHide
+{
+	display: none;
+}
+
+.notVisible
+{
+	display:none;
+}
+
+.isVisible
+{
+  display: table-row;
+}
+
+.bottomMargin10
+{
+    margin-bottom:10px;
+}
+
+.bottomMargin20
+{
+    margin-bottom:20px;
+}

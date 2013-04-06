@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>The HTML5 Geolocation API</title>
+</head>
+<body onload="loadGeoData();">
+<h1>HTML5 Geolocation</h1>
+<span class="info">
+<p id="status">HTML5 Geolocation is <strong>not</strong> supported in your browser.</p>
+</span>
+<h2>Current Position:</h2>
+<table border="1">
+  <tr>
+    <th width="40" scope="col">Latitude:</th>
+    <td width="114" id="latitude">?</td>
+  </tr>
+  <tr>
+    <th>Longitude:</th>
+    <td id="longitude">?</td>
+  </tr>
+</table>
+
+  <input type="button" name="getAccuracy" id="getAccuracy" value="Get Accuracy" onclick="getAccuracy();">
+  <input type="button" name="getTimeStamp" id="getTimeStamp" value="Get Time" onclick="getTimeStamp();">
+  <input type="button" name="getAltitude" id="getAltitude" value="Get Altitude" onclick="getAltitude();">
+  <input type="button" name="getAltitudeAccuracy" id="getAltitudeAccuracy" value="Get Altitude Accuracy" onclick="getAltitudeAccuracy();">
+
+<script type="text/javascript">
+var accuracy;
+var timestamp;
+var altitude; 
+var altitudeAccuracy;	
+function loadGeoData() {
+	if (navigator.geolocation) {
+		document.getElementById("status").innerHTML = "HTML5 Geolocation is supported in your browser.";
+		navigator.geolocation.getCurrentPosition(updateLocation);
+	}
+};
+function updateLocation(position) {
+	var latitude = position.coords.latitude;
+	var longitude = position.coords.longitude;
+	accuracy = position.coords.accuracy;
+	timestamp = position.timestamp;
+	altitude = position.coords.altitude;
+	if (!latitude || !longitude) {
+		document.getElementById("status").innerHTML = "HTML5 Geolocation is supported in your browser, but location is currently not available.";
+		return;
+	}
+	document.getElementById("latitude").innerHTML = latitude;
+	document.getElementById("longitude").innerHTML = longitude;
+};
+	
+function getTimeStamp() {
+	alert("Time position was acquired in milliseconds: " +  timestamp);	
+};
+
+function getAccuracy() {
+	alert("Position was acquired with an accuracy of: " +  accuracy + " meters");	
+};
+	
+function getAltitude() {
+	alert("Position altitude is: " +  altitude + " meters");	
+};
+	
+function getAltitudeAccuracy() {
+	alert("Positions Altitude Accuracy is: " + altitudeAccuracy);
+};
+  </script>
+</body>
+</html>

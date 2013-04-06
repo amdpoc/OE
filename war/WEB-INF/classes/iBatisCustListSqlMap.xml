@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC
+    "-//iBATIS.com//DTD SQL Map 2.0//EN"
+    "http://www.ibatis.com/dtd/sql-map-2.dtd">
+<sqlMap>
+    <cacheModel id="custListCache" type="LRU">
+        <flushInterval hours="1" />
+        <property name="size" value="2000" />
+     </cacheModel>
+
+<select id="getNormalizedName" resultClass="java.lang.String" parameterClass="java.lang.String" cacheModel="custDetailsCache">
+     select get_normalized_name(#name# ,'Y', '200') NORMNAME from dual
+</select>
+<resultMap id="custListEntity" class="ilink.domain.CustListItem">
+    <result property="customerId" column="CUSTOMER_ID"/>
+    <result property="customerName" column="BUSINESS_NAME"/>
+    <result property="contactName" column="contact_name"/>
+    <result property="formattedPhone" column="formatted_phone"/>
+    <result property="address" column="formatted_address"/>
+    <result property="bots" column="bots"/>
+    <result property="nisd" column="nisd"/>
+    <result property="prospectCode" column="cst_prospect_code"/>
+</resultMap>
+
+<select id="getCustListByName" resultMap="custListEntity" parameterClass="java.util.HashMap">
+       SELECT  /*+ use_nl(INLINE) use_nl(community) */
+               customer.customer_id,
+                DBMS_XMLGEN.CONVERT (REPLACE (REPLACE (REPLACE (NVL (listing.listed_name,customer.business_name), CHR (13),'%0D'), CHR (10), '%0A'), CHR (92), '%5C')) business_name,
+                DBMS_XMLGEN.CONVERT (REPLACE (REPLACE (REPLACE (NVL (contact.contact_name, ' '), CHR (13),'%0D'), CHR (10), '%0A'), CHR (92), '%5C')) contact_name,
+                DECODE (
+                   DECODE (contact.contact_tn_npa,
+                           NULL, listing.atn_npa,
+                           contact.contact_tn_npa),
+                   NULL, '',
+                   ('('
+                    || DECODE (contact.contact_tn_npa,
+                               NULL, listing.atn_npa,
+                               contact.contact_tn_npa)
+                    || ') '
+                    || DECODE (contact.contact_tn_cop,
+                               NULL, listing.atn_cop,
+                               contact.contact_tn_cop)
+                    || ' - '
+                    || DECODE (contact.contact_tn_line_no,
+                               NULL, listing.atn_line_no,
+                               contact.contact_tn_line_no)))
+                   formatted_phone,
+                LTRIM (TO_CHAR (customer.bots_amt, '9999990.99')) bots,
+                LTRIM (TO_CHAR (customer.nisd_amt, '9999990.99')) nisd,
+                (SELECT dc.decode_display
+                   FROM domain_decodes dc
+                  WHERE dc.domain_code = 'PROSPCODE'
+                        AND customer.cst_prospect_code = dc.code_value)
+                   cst_prospect_code,
+                DBMS_XMLGEN.CONVERT (REPLACE (REPLACE (REPLACE (DECODE (
+                    address.po_box,
+                    NULL, (NVL (address.house_no, '') || ' '
+                           || DECODE (address.directional,
+                                      NULL, '',
+                                      (address.directional || '. '))
+                           || NVL (address.street_name, '')
+                           || ' '),
+                    address.po_box)
+                 || ' '
+                 || DECODE (community.community_name,
+                            NULL, '',
+                            (community.community_name || ', '))
+                 || community.state_abbr
+                 || ' '
+                 || address.zip_five
+                 || DECODE (address.zip_four, NULL, '', (' - ' || address.zip_four)),
+                       CHR (13),'%0D'), CHR (10), '%0A'), CHR (92), '%5C'))AS formatted_address
+           FROM (SELECT *
+                   FROM (SELECT DISTINCT cst.customer_id customer_id
+                           FROM customer cst
+                          WHERE cst.search_business_name LIKE  #custName# AND ROWNUM &lt;#rowNum#
+                         UNION
+                         SELECT DISTINCT lst.customer_id customer_id
+                           FROM listing lst
+                          WHERE     lst.search_listed_name LIKE  #custName#
+                               /* AND lst.last_version_ind = 'Y' */
+                                AND ROWNUM &lt;#rowNum#
+                         UNION
+                         SELECT DISTINCT cnt3.customer_id customer_id
+                           FROM contact cnt3, customer cst3
+                          WHERE cnt3.search_contact_name LIKE #custName# AND ROWNUM &lt;#rowNum#
+                           AND cst3.contact_id = cnt3.contact_id
+                         UNION
+                         SELECT DISTINCT billacct1.customer_id customer_id
+                           FROM billing_account billacct1
+                          WHERE billacct1.search_billing_name LIKE  #custName# AND ROWNUM &lt;#rowNum#)
+                  WHERE ROWNUM &lt;#rowNum#) inline,
+                customer,
+                listing,
+                address,
+                contact,
+                community
+          WHERE     customer.main_main_listing_id = listing.listing_id(+)
+                AND listing.last_version_ind(+) = 'Y'
+                AND customer.contact_id = contact.contact_id(+)
+                AND contact.address_id = address.address_id(+)
+                AND address.community_id = community.community_id(+)
+                AND customer.customer_id = inline.customer_id
+                AND ROWNUM &lt;#rowNum#
+       ORDER BY UPPER(business_name)
+</select>
+<select id="getCustListByTN" resultMap="custListEntity" parameterClass="java.util.HashMap">
+    SELECT   /*+ use_nl(INLINE) */
+         customer.customer_id,
+         DBMS_XMLGEN.CONVERT (REPLACE (REPLACE (REPLACE (NVL (listing.listed_name,customer.business_name), CHR (13),'%0D'), CHR (10), '%0A'), CHR (92), '%5C')) business_name,
+         DBMS_XMLGEN.CONVERT (REPLACE (REPLACE (REPLACE (NVL (contact.contact_name, ' '), CHR (13),'%0D'), CHR (10), '%0A'), CHR (92), '%5C')) contact_name,
+                DECODE (DECODE (contact.contact_tn_npa,
+                       NULL, listing.atn_npa,
+                       contact.contact_tn_npa
+                      ),
+               NULL, '',
+               (   '('
+                || DECODE (contact.contact_tn_npa,
+                           NULL, listing.atn_npa,
+                           contact.contact_tn_npa
+                          )
+                || ') '
+                || DECODE (contact.contact_tn_cop,
+                           NULL, listing.atn_cop,
+                           contact.contact_tn_cop
+                          )
+                || ' - '
+                || DECODE (contact.contact_tn_line_no,
+                           NULL, listing.atn_line_no,
+                           contact.contact_tn_line_no
+                          )
+               )
+              ) formatted_phone,
+         ltrim(to_char(customer.bots_amt,'9999990.99')) bots, ltrim(to_char(customer.nisd_amt,'9999990.99'))nisd,
+         (SELECT dc.decode_display
+            FROM domain_decodes dc
+           WHERE dc.domain_code = 'PROSPCODE'
+             AND customer.cst_prospect_code = dc.code_value) cst_prospect_code,
+         DBMS_XMLGEN.CONVERT (REPLACE (REPLACE (REPLACE (DECODE (address.po_box,
+                             NULL, (   NVL (address.house_no, '')
+                                    || ' '
+                                    || DECODE (address.directional,
+                                               NULL, '',
+                                               (address.directional|| '. '
+                                               )
+                                              )
+                                    || NVL (address.street_name, '')
+                                    || ' '
+                              ),
+                             address.po_box
+                            )
+                  || ' '
+                  || DECODE (community.community_name,
+                                               NULL, '',
+                                               (community.community_name|| ', '
+                                               )
+                                              )
+                  || community.state_abbr
+                  || ' '
+                  || address.zip_five
+                  || DECODE (address.zip_four,NULL, '',( ' - ' ||address.zip_four)),
+                    CHR (13),'%0D'), CHR (10), '%0A'), CHR (92), '%5C'))AS formatted_address
+    FROM (       /* Union 1 Select by billing tn by contact TN - direct accounts
+           */SELECT DISTINCT billacct1.customer_id customer_id
+                        FROM contact cnt1, billing_account billacct1
+                       WHERE cnt1.contact_tn_npa = #npa#
+                         AND cnt1.contact_tn_cop = #cop#
+                         AND cnt1.contact_tn_line_no = #lineNo#
+                         AND billacct1.contact_id = cnt1.contact_id
+                         AND billacct1.billing_agent = 'D'
+                         /* Union 2 Select by billing tn by contact TN - telco accounts */
+             UNION
+             SELECT DISTINCT billacct2.customer_id customer_id
+                        FROM contact cnt2,
+                             billing_account billacct2,
+                             listing lst2
+                       WHERE lst2.listed_tn_npa = #npa#
+                         AND lst2.listed_tn_cop = #cop#
+                         AND lst2.listed_tn_line_no = #lineNo#
+                         AND lst2.listing_id = billacct2.billing_lst_id
+                         AND lst2.last_version_ind = 'Y'
+                         AND billacct2.contact_id = cnt2.contact_id
+                         AND billacct2.billing_agent = 'T'
+                         /* Union3 Select by customer contact tn */
+             UNION
+             SELECT DISTINCT cst3.customer_id customer_id
+                        FROM customer cst3, contact cnt3
+                       WHERE cst3.contact_id = cnt3.contact_id
+                         AND cnt3.contact_tn_npa = #npa#
+                         AND cnt3.contact_tn_cop = #cop#
+                         AND cnt3.contact_tn_line_no = #lineNo#
+                        /* Union 4 Select by listing tn */
+             UNION
+             SELECT          /*+ INDEX_COMBINE(LST4)*/
+                    DISTINCT lst4.customer_id customer_id
+                        FROM listing lst4
+                       WHERE (       lst4.atn_npa = #npa#
+                                 AND lst4.atn_cop = #cop#
+                                 AND lst4.atn_line_no = #lineNo#
+                              OR     lst4.listed_tn_npa = #npa#
+                                 AND lst4.listed_tn_cop = #cop#
+                                 AND lst4.listed_tn_line_no = #lineNo#
+                              OR     lst4.stn_npa = #npa#
+                                 AND lst4.stn_cop = #cop#
+                                 AND lst4.stn_line_no = #lineNo#
+                             ) /* Union 5 Select text tn */
+             UNION
+             SELECT DISTINCT txt5.customer_id customer_id
+                        FROM item_text txt5, prd_curr_issue currprd5
+                       WHERE txt5.product_code = currprd5.product_code
+                         AND txt5.product_issue_num =
+                                                    currprd5.product_issue_num
+                         AND txt5.text_tn_npa = #npa#
+                         AND txt5.text_tn_cop = #cop#
+                         AND txt5.text_tn_line_no = #lineNo#
+                          /* Union 6 Select billing tn */
+             UNION
+             SELECT DISTINCT bill6.customer_id customer_id
+                        FROM billing_account bill6, listing lst6
+                       WHERE bill6.billing_lst_id = lst6.listing_id
+                         AND lst6.last_version_ind = 'Y'
+                         AND bill6.billing_agent = 'T'
+                         AND lst6.atn_npa = #npa#
+                         AND lst6.atn_cop = #cop#
+                         AND lst6.atn_line_no = #lineNo#
+             ) inline,
+         customer,
+         listing,
+         address,
+         contact,
+         community
+   WHERE customer.main_main_listing_id = listing.listing_id(+)
+     AND listing.last_version_ind(+) = 'Y'
+     AND customer.contact_id = contact.contact_id(+)
+     AND contact.address_id = address.address_id(+)
+     AND address.community_id = community.community_id(+)
+     AND customer.customer_id = inline.customer_id
+    ORDER BY UPPER(business_name)
+</select>
+
+<select id="getCustListByCustId" resultMap="custListEntity" parameterClass="String">
+     SELECT   /*+ use_nl(INLINE) */
+        customer.customer_id,
+        DBMS_XMLGEN.CONVERT (REPLACE (REPLACE (REPLACE (NVL (listing.listed_name,customer.business_name), CHR (13),'%0D'), CHR (10), '%0A'), CHR (92), '%5C')) business_name,
+        DBMS_XMLGEN.CONVERT (REPLACE (REPLACE (REPLACE (NVL (contact.contact_name, ' '), CHR (13),'%0D'), CHR (10), '%0A'), CHR (92), '%5C')) contact_name,
+                DECODE (DECODE (contact.contact_tn_npa,
+                       NULL, listing.atn_npa,
+                       contact.contact_tn_npa
+                      ),
+               NULL, '',
+               (   '('
+                || DECODE (contact.contact_tn_npa,
+                           NULL, listing.atn_npa,
+                           contact.contact_tn_npa
+                          )
+                || ') '
+                || DECODE (contact.contact_tn_cop,
+                           NULL, listing.atn_cop,
+                           contact.contact_tn_cop
+                          )
+                || ' - '
+                || DECODE (contact.contact_tn_line_no,
+                           NULL, listing.atn_line_no,
+                           contact.contact_tn_line_no
+                          )
+               )
+              ) formatted_phone,
+         ltrim(to_char(customer.bots_amt,'9999990.99')) bots, ltrim(to_char(customer.nisd_amt,'9999990.99'))nisd,
+         (SELECT dc.decode_display
+            FROM domain_decodes dc
+           WHERE dc.domain_code = 'PROSPCODE'
+             AND customer.cst_prospect_code = dc.code_value) cst_prospect_code,
+         DBMS_XMLGEN.CONVERT (REPLACE (REPLACE (REPLACE (DECODE (address.po_box,
+                             NULL, (   NVL (address.house_no, '')
+                                    || ' '
+                                    || DECODE (address.directional,
+                                               NULL, '',
+                                               (address.directional|| '. '
+                                               )
+                                              )
+                                    || NVL (address.street_name, '')
+                                    || ' '
+                              ),
+                             address.po_box
+                            )
+                  || ' '
+                  || DECODE (community.community_name,
+                                               NULL, '',
+                                               (community.community_name|| ', '
+                                               )
+                                              )
+                  || community.state_abbr
+                  || ' '
+                  || address.zip_five
+                  || DECODE (address.zip_four,NULL, '',( ' - ' ||address.zip_four)),
+                  CHR (13),'%0D'), CHR (10), '%0A'), CHR (92), '%5C'))AS formatted_address
+  FROM customer,
+       contact,
+       listing,
+       address,
+       community
+ WHERE customer.main_main_listing_id = listing.listing_id(+)
+   AND listing.last_version_ind(+) = 'Y'
+   AND contact.address_id = address.address_id(+)
+   AND address.community_id = community.community_id(+)
+   AND customer.customer_id in( #custId# )
+   AND contact.customer_id = customer.customer_id
+   AND contact.contact_id = customer.contact_id
+   ORDER BY UPPER(business_name)
+</select>
+</sqlMap>

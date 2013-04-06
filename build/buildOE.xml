@@ -1,0 +1,241 @@
+<?xml version="1.0"?>
+<project name="oe" basedir="." default="usage">
+	<property file="buildIlink.properties"/>
+	<property name="src.dir" value="..\src"/>
+	<property name="web.dir" value="..\war"/>
+    <property name="yui.dir" value="..\yuicompressor-2.4.2"/>
+    <property name="js.dir" value="..\war\javascript"/>
+    <property name="css.dir" value="..\war\css"/>
+	<property name="build.dir" value="${web.dir}/WEB-INF/classes"/>
+    <property name="log.dir" value="${web.dir}/WEB-INF/logs"/>
+	<property name="name" value="oe"/>
+	<property name="test.dir" value="..\test"/>
+	<path id="master-classpath">
+		<fileset dir="${web.dir}/WEB-INF/lib">
+			<include name="*.jar"/>
+		</fileset>
+		<!-- We need the servlet API classes: -->
+		<!-- * for Tomcat 5/6 use servlet-api.jar -->
+		<fileset dir="${appserver.lib}">
+			<include name="servlet*.jar"/>
+		</fileset>
+		<pathelement path="${build.dir}"/>
+	</path>
+	<target name="usage">
+		<echo message=""/>
+		<echo message="${name} build file"/>
+		<echo message="-----------------------------------"/>
+		<echo message=""/>
+		<echo message="Available targets are:"/>
+		<echo message=""/>
+		<echo message="build --> Build the application"/>
+		<echo message="deploy --> Deploy application as directory"/>
+		<echo message="deploywar --> Deploy application as a WAR file"/>
+        <echo message="deploywar_min --> Deploy application as a WAR file with compressed js and css"/>
+		<echo message="install --> Install application in Tomcat"/>
+		<echo message="reload --> Reload application in Tomcat"/>
+		<echo message="start --> Start Tomcat application"/>
+		<echo message="stop --> Stop Tomcat application"/>
+		<echo message="list --> List Tomcat applications"/>
+		<echo message=""/>
+	</target>
+	<target name="build" description="Compile main source tree java files">
+        <mkdir dir="${log.dir}"/>
+		<mkdir dir="${build.dir}"/>
+		<javac destdir="${build.dir}" source="1.6" target="1.6" debug="true" deprecation="false" optimize="false" failonerror="true">
+			<src path="${src.dir}"/>
+			<classpath refid="master-classpath"/>
+		</javac>
+	</target>
+	<target name="deploy" depends="build" description="Deploy application">
+		<copy todir="${deploy.path}/${name}" preservelastmodified="true">
+			<fileset dir="${web.dir}">
+				<include name="**/*"/>
+			</fileset>
+		</copy>
+	</target>
+	<target name="deploywar" depends="build" description="Deploy application as a WAR file">
+
+		<war destfile="${name}.war" webxml="${web.dir}/WEB-INF/web.xml">
+			<fileset dir="${web.dir}">
+				<include name="**/*"/>
+			</fileset>
+		</war>
+		<copy todir="${deploy.path}" preservelastmodified="true">
+			<fileset dir=".">
+				<include name="*.war"/>
+			</fileset>
+		</copy>
+	</target>
+    <target name="deploywar_min" depends="minify" description="Deploy application as a WAR file with min js and css">
+        <mkdir dir="build_tmp"/>
+        <move todir="build_tmp" overwrite="true">
+            <fileset dir="${js.dir}" includes="*.js" />
+            <fileset dir="${css.dir}" includes="*.css" />
+        </move>
+        <move todir="${js.dir}" overwrite="true">
+            <fileset dir="min_js" includes="*.js" />
+        </move>
+        <move todir="${css.dir}" overwrite="true">
+            <fileset dir="min_css" includes="*.css" />
+        </move>
+		<war destfile="${name}.war" webxml="${web.dir}/WEB-INF/web.xml">
+			<fileset dir="${web.dir}">
+				<include name="**/*"/>
+			</fileset>
+		</war>
+		<copy todir="${deploy.path}" preservelastmodified="true">
+			<fileset dir=".">
+				<include name="*.war"/>
+			</fileset>
+		</copy>
+        <copy todir="${js.dir}" overwrite="true">
+            <fileset dir="build_tmp" includes="*.js" />
+        </copy>
+        <copy todir="${css.dir}" overwrite="true">
+            <fileset dir="build_tmp" includes="*.css" />
+        </copy>
+        <delete dir="build_tmp"/>
+	</target>
+
+    <target name="minify" depends="build" description="Now minifying js and css files">
+    <echo>
+        Now minifying js and css files
+    </echo>
+
+    <mkdir dir="min_js"/>
+    <delete>
+			<fileset dir="min_js">
+			<include name="**/*.*"/>
+			</fileset>
+	</delete>
+    <apply executable="java" parallel="false" dest="min_js">
+        <fileset dir="${js.dir}" includes="**/*.js" />
+        <arg line="-jar"/>
+        <arg path="${yui.dir}/build/yuicompressor-2.4.2.jar" />
+        <arg line="-v"/>
+        <srcfile/>
+        <arg line="-o"/>
+        <mapper type="glob" from="*.js" to="*.js"/>
+        <targetfile/>
+    </apply>
+    <mkdir dir="min_css"/>
+    <delete>
+			<fileset dir="min_css">
+			<include name="**/*.*"/>
+			</fileset>
+	</delete>
+
+    <apply executable="java" parallel="false" dest="min_css">
+        <fileset dir="${css.dir}" includes="*.css" />
+        <arg line="-jar"/>
+        <arg path="${yui.dir}/build/yuicompressor-2.4.2.jar" />
+        <arg line="-v"/>
+        <srcfile/>
+        <arg line="-o"/>
+        <mapper type="glob" from="*.css" to="*.css"/>
+        <targetfile/>
+    </apply>
+
+    <!--apply executable="java" parallel="false" dest="${css.dir}/ui-lightness">
+        <fileset dir="${css.dir}/ui-lightness" includes="*.css" />
+        <arg line="-jar"/>
+        <arg path="${yui.dir}/build/yuicompressor-2.4.2.jar" />
+        <arg line="-v"/>
+        <srcfile/>
+        <arg line="-o"/>
+        <mapper type="glob" from="*.css" to="*-min.css"/>
+        <targetfile/>
+    </apply-->
+
+    </target>
+	<!-- ============================================================== -->
+	<!-- Tomcat tasks  -->
+	<!-- ============================================================== -->
+	<path id="catalina-ant-classpath">
+		<!-- We need the Catalina jars for Tomcat -->
+		<!-- * for other app servers - check the docs -->
+		<fileset dir="${appserver.lib}">
+			<include name="catalina-ant.jar"/>
+		</fileset>
+	</path>
+	<taskdef name="install" classname="org.apache.catalina.ant.InstallTask">
+		<classpath refid="catalina-ant-classpath"/>
+	</taskdef>
+	<taskdef name="reload" classname="org.apache.catalina.ant.ReloadTask">
+		<classpath refid="catalina-ant-classpath"/>
+	</taskdef>
+	<taskdef name="list" classname="org.apache.catalina.ant.ListTask">
+		<classpath refid="catalina-ant-classpath"/>
+	</taskdef>
+	<taskdef name="start" classname="org.apache.catalina.ant.StartTask">
+		<classpath refid="catalina-ant-classpath"/>
+	</taskdef>
+	<taskdef name="stop" classname="org.apache.catalina.ant.StopTask">
+		<classpath refid="catalina-ant-classpath"/>
+	</taskdef>
+	<target name="install" description="Install application in Tomcat">
+		<install url="${tomcat.manager.url}" username="${tomcat.manager.username}" password="${tomcat.manager.password}" path="/${name}" war="${name}"/>
+	</target>
+	<target name="reload" description="Reload application in Tomcat">
+		<reload url="${tomcat.manager.url}" username="${tomcat.manager.username}" password="${tomcat.manager.password}" path="/${name}"/>
+	</target>
+	<target name="start" description="Start Tomcat application">
+		<start url="${tomcat.manager.url}" username="${tomcat.manager.username}" password="${tomcat.manager.password}" path="/${name}"/>
+	</target>
+	<target name="stop" description="Stop Tomcat application">
+		<stop url="${tomcat.manager.url}" username="${tomcat.manager.username}" password="${tomcat.manager.password}" path="/${name}"/>
+	</target>
+	<target name="list" description="List Tomcat applications">
+		<list url="${tomcat.manager.url}" username="${tomcat.manager.username}" password="${tomcat.manager.password}"/>
+	</target>
+	<!-- End Tomcat tasks -->
+	<target name="buildtests" description="Compile test tree java files">
+		<mkdir dir="${build.dir}"/>
+		<javac destdir="${build.dir}" source="1.6" target="1.6" debug="true"
+			deprecation="false" optimize="false" failonerror="true">
+			<src path="${test.dir}"/>
+			<classpath refid="master-classpath"/>
+		</javac>
+	</target>
+	<target name="tests" depends="build, buildtests" description="Run tests">
+		<junit printsummary="on"
+			fork="false"
+			haltonfailure="false"
+			failureproperty="tests.failed"
+			showoutput="true">
+			<classpath refid="master-classpath"/>
+			<formatter type="brief" usefile="false"/>
+			<batchtest>
+				<fileset dir="${build.dir}">
+					<include name="**/*Tests.*"/>
+				</fileset>
+			</batchtest>	
+		</junit>
+		<fail if="tests.failed">
+			tests.failed=${tests.failed}
+			***********************************************************
+			***********************************************************
+			**** One or more tests failed! Check the output ... ****
+			***********************************************************
+			***********************************************************
+		</fail>
+	</target>
+	<target name="clean" description="Clean output directories">
+		<delete>
+			<fileset dir="${build.dir}">
+				<include name="**/*.class"/>
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="undeploy" description="Un-Deploy application">
+		<delete>
+			<fileset dir="${deploy.path}/${name}">
+			<include name="**/*.*"/>
+			</fileset>
+		</delete>	
+	</target>
+
+	
+</project>

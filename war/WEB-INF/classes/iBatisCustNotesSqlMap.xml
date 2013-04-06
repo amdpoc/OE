@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC
+        "-//iBATIS.com//DTD SQL Map 2.0//EN"
+        "http://www.ibatis.com/dtd/sql-map-2.dtd">
+<sqlMap>
+    <cacheModel id="custNotesCache" type="LRU">
+        <flushInterval hours="24"/>
+        <property name="size" value="1000"/>
+    </cacheModel>
+
+    <resultMap id="custNotesListResult" class="ilink.domain.CustNotesListItem">
+        <result property="noteId"       column="note_id"/>
+        <result property="creationDate" column="creation_date"/>
+        <result property="salesRep"     column="repid"/>
+        <result property="office"       column="office"/>
+        <result property="noteText"     column="note_text"/>
+        <result property="noteType"     column="note_type"/>
+        <result property="callResults"  column="callresults"/>
+    </resultMap>
+    <select id="getCustNotesByCustId" resultMap="custNotesListResult" parameterClass="long">
+        SELECT   customer_notes.note_id,
+            NVL (TO_CHAR (customer_notes.creation_date, 'MM/DD/YYYY'),
+                 ' '
+                )
+         || ' '
+         || NVL (TO_CHAR (customer_notes.creation_date, 'HH:MI AM'), ' ')
+                                                                creation_date,
+         TO_CHAR (customer_notes.creation_date,
+                  'YYYYMMDDHH24MISS'
+                 ) AS sortfield,
+         (SELECT    e.employee_id
+                 || ' - '
+                 || INITCAP (LOWER (e.emp_first_name))
+                 || ' '
+                 || INITCAP (LOWER (e.employee_surname))
+            FROM employee e
+           WHERE e.employee_id = customer_notes.rep_id) AS repid,
+         (SELECT DISTINCT dd.decode_display
+                     FROM office o, domain_decodes dd
+                    WHERE o.office_type = dd.code_value
+                      AND dd.domain_code = 'OFFICETYPE'
+                      AND o.office_type = customer_notes.office_type
+                      AND ROWNUM = 1) AS office,
+           DBMS_XMLGEN.CONVERT (CASE WHEN LENGTH (customer_notes.note_text) >= 3500
+              THEN REPLACE(REPLACE(REPLACE(NVL(SUBSTR(customer_notes.note_text,0,3500)|| '...',' '),CHR (13),'%0D'),CHR (10),'%0A'), CHR (92),'%5C')
+             ELSE REPLACE(REPLACE(REPLACE (NVL (customer_notes.note_text,' '), CHR (13),'%0D'),CHR (10),'%0A'), CHR (92),'%5C')
+           END) note_text,
+          /* DBMS_XMLGEN.CONVERT (REPLACE (REPLACE (REPLACE (NVL (customer_notes.note_text, ' '), CHR (13),'%0D'), CHR (10), '%0A'), CHR (92), '%5C')) note_text,*/
+         (SELECT DISTINCT dd.decode_display
+                     FROM domain_decodes dd
+                    WHERE dd.code_value =
+                                        customer_notes.note_type
+                      AND dd.domain_code = 'CUSTNOTETYP'
+                      AND ROWNUM = 1) AS note_type,
+         (SELECT DISTINCT dd.decode_display
+                     FROM domain_decodes dd
+                    WHERE dd.code_value =
+                                    customer_notes.call_result
+                      AND dd.domain_code = 'CALLRESULT'
+                      AND ROWNUM = 1) AS callresults,
+         'N' AS table_indicator
+    FROM customer_notes
+   WHERE customer_notes.customer_id = #custId#
+     AND (0 = 0 OR customer_notes.rep_id = 0)
+     AND customer_notes.creation_date &gt;= sysdate - 730
+     AND NVL (customer_notes.deleted_note_ind, ' ') &lt;&gt; 'Y'
+UNION
+SELECT   kpi_activity.activity_id,
+         (CASE
+             WHEN (   kpi_activity.ctcr_online_prog_dt &gt;
+                                               kpi_activity.ctcr_batch_prog_dt
+                   OR kpi_activity.ctcr_batch_prog_dt IS NULL
+                  )
+                THEN    TO_CHAR (kpi_activity.ctcr_online_prog_dt, 'MM/DD/YYYY')
+                     || ' '
+                     || (CASE
+                            WHEN kpi_activity.ctcr_sys_upd_dt IS NULL
+                               THEN TO_CHAR (kpi_activity.ctcr_sys_cre_dt,
+                                             'HH:MI AM'
+                                            )
+                            ELSE TO_CHAR (kpi_activity.ctcr_sys_upd_dt,
+                                          'HH:MI AM'
+                                         )
+                         END
+                        )
+             ELSE    TO_CHAR (kpi_activity.ctcr_batch_prog_dt, 'MM/DD/YYYY')
+                  || ' '
+                  || (CASE
+                         WHEN kpi_activity.ctcr_sys_upd_dt IS NULL
+                            THEN TO_CHAR (kpi_activity.ctcr_sys_cre_dt,
+                                          'HH:MI AM'
+                                         )
+                         ELSE TO_CHAR (kpi_activity.ctcr_sys_upd_dt,
+                                       'HH:MI AM'
+                                      )
+                      END
+                     )
+          END
+         ) AS creation_date,
+         (CASE
+             WHEN (   kpi_activity.ctcr_online_prog_dt >
+                                               kpi_activity.ctcr_batch_prog_dt
+                   OR kpi_activity.ctcr_batch_prog_dt IS NULL
+                  )
+                THEN    TO_CHAR (kpi_activity.ctcr_online_prog_dt, 'YYYYMMDD')
+                     || ''
+                     || (CASE
+                            WHEN kpi_activity.ctcr_sys_upd_dt IS NULL
+                               THEN TO_CHAR (kpi_activity.ctcr_sys_cre_dt,
+                                             'HH24MISS'
+                                            )
+                            ELSE TO_CHAR (kpi_activity.ctcr_sys_upd_dt,
+                                          'HH24MISS'
+                                         )
+                         END
+                        )
+             ELSE    TO_CHAR (kpi_activity.ctcr_batch_prog_dt, 'YYYYMMDD')
+                  || ''
+                  || (CASE
+                         WHEN kpi_activity.ctcr_sys_upd_dt IS NULL
+                            THEN TO_CHAR (kpi_activity.ctcr_sys_cre_dt,
+                                          'HH24MISS'
+                                         )
+                         ELSE TO_CHAR (kpi_activity.ctcr_sys_upd_dt,
+                                       'HH24MISS'
+                                      )
+                      END
+                     )
+          END
+         ) AS sortfield,
+         (CASE
+             WHEN kpi_activity.created_by IS NOT NULL
+                THEN (SELECT    e.employee_id
+                             || ' - '
+                             || INITCAP (LOWER (e.emp_first_name))
+                             || ' '
+                             || INITCAP (LOWER (e.employee_surname))
+                        FROM employee e
+                       WHERE e.employee_id = kpi_activity.created_by)
+             ELSE CASE
+             WHEN (kpi_opportunity.employee_id IS NOT NULL)
+                THEN (SELECT    e.employee_id
+                             || ' - '
+                             || INITCAP (LOWER (e.emp_first_name))
+                             || ' '
+                             || INITCAP (LOWER (e.employee_surname))
+                        FROM employee e
+                       WHERE e.employee_id = kpi_opportunity.employee_id)
+             ELSE ''
+          END
+          END
+         ) AS repid,
+         (SELECT DISTINCT dd.decode_display
+                     FROM office o, domain_decodes dd
+                    WHERE o.office_type = dd.code_value
+                      AND dd.domain_code = 'OFFICETYPE'
+                      AND o.office_type = employee.office_type
+                      AND ROWNUM = 1) AS office,
+         DBMS_XMLGEN.CONVERT(NVL ( project_issue.project_year
+                                  || ' '
+                                  || kpi_opportunity.project_code_3
+                                  || ' '
+                                  || kpi_activity_ref.event_description,
+                                  ' '
+                                 )) note_text,
+         (SELECT DISTINCT dd.decode_display
+                     FROM domain_decodes dd
+                    WHERE dd.code_value = 'A'
+                      AND dd.domain_code = 'CUSTNOTETYP'
+                      AND ROWNUM = 1) AS note_type,
+         TO_CHAR (kpi_activity.outcome_path) AS callresults,
+         'A' AS table_indicator
+    FROM kpi_opportunity, kpi_activity, employee, kpi_activity_ref, project_issue
+   WHERE kpi_opportunity.customer_id = #custId#
+     AND (   0 = 0
+          OR NVL (kpi_activity.created_by, kpi_opportunity.employee_id) = 0
+         )
+     AND kpi_opportunity.opportunity_id = kpi_activity.opportunity_id
+     AND kpi_activity.activity_type = kpi_activity_ref.activity_type
+     AND employee.employee_id =
+                    NVL (kpi_activity.created_by, kpi_opportunity.employee_id)
+     AND kpi_activity.creation_date &gt;= sysdate - 730
+     AND kpi_activity_ref.customer_notes_ind = 'Y'
+     AND project_issue.project_code = kpi_opportunity.project_code_3
+     AND kpi_opportunity.project_issue_num_3 = project_issue.project_issue_num
+ORDER BY sortfield DESC
+</select>
+
+
+<resultMap id="custNotesListResultTx" class="ilink.domain.CustNotesTxListItem">
+    <result property="noteId"       column="note_id"/>
+    <result property="creationDate" column="creation_date_time"/>
+    <result property="repId"        column="rep_id"/>
+    <result property="repName"      column="rep_name"/>
+    <result property="noteText"     column="note_text"/>
+</resultMap>
+
+<select id="getCustNotesTx" resultMap="custNotesListResultTx" parameterClass="long">
+   SELECT TO_CHAR (creation_date, 'MM/DD/YYYY HH:MI AM') creation_date_time,
+      note_id,
+      note_text,
+      rep_id,
+      INITCAP (emp_first_name || ' ' || employee_surname) rep_name
+  FROM (SELECT   cn.creation_date, cn.note_id,
+       /* DBMS_XMLGEN.CONVERT (REPLACE (REPLACE (REPLACE (NVL (cn.note_text, ' '), CHR (13),'%0D'), CHR (10), '%0A'), CHR (92), '%5C')) note_text,*/
+       DBMS_XMLGEN.CONVERT (CASE WHEN LENGTH (cn.note_text) >= 3500
+          THEN REPLACE(REPLACE(REPLACE(NVL(SUBSTR(cn.note_text,0,3500)|| '...',' '),CHR (13),'%0D'),CHR (10),'%0A'), CHR (92),'%5C')
+         ELSE REPLACE(REPLACE(REPLACE (NVL (cn.note_text,' '), CHR (13),'%0D'),CHR (10),'%0A'), CHR (92),'%5C')
+       END) note_text,
+       NVL(cn.rep_id, 0) rep_id, NVL(e.emp_first_name, '') emp_first_name, NVL(e.employee_surname, '') employee_surname
+            FROM customer_notes cn, employee e
+           WHERE cn.customer_id = #custId#
+             AND cn.rep_id = e.employee_id(+)
+             AND cn.note_type = 'N'
+             AND NVL (cn.deleted_note_ind, ' ')&lt;&gt; 'Y'
+             AND cn.creation_date >= sysdate - 730
+        ORDER BY cn.note_id DESC)
+</select>
+</sqlMap>

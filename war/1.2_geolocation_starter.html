@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>The HTML5 Geolocation API</title>
+</head>
+<body onload="loadGeoData();">
+<h1>HTML5 Geolocation</h1>
+<span class="info">
+<p id="status">HTML5 Geolocation is NOT supported in your browser. </p>
+</span>
+<h2>Current Position:</h2>
+<table border="1">
+  <tr>
+    <th width="40" scope="col">Latitude:</th>
+    <td width="114" id="latitude">?</td>
+  </tr>
+    <tr>
+        <th>Longitude:</th>
+        <td id="longitude">?</td>
+    </tr>
+    <tr>
+        <th>Longitude:</th>
+        <td id="altitude">?</td>
+    </tr>
+</table>
+<script type="text/javascript">
+function loadGeoData() {
+	if (navigator.geolocation) {
+		document.getElementById("status").innerHTML = "HTML5 Geolocation is supported in your browser.";
+        navigator.geolocation.getCurrentPosition(updateLocation,failure,{timeout:50000});
+	}
+};
+
+function updateLocation(position)
+{
+    console.log("here");
+    var lat = position.coords.latitude;
+    var lon = position.coords.longitude;
+    var alt = position.coords.altitude;
+    console.log("lat = ",lat," :: lon = ", lon);
+    if (! lat || ! lon) {
+        document.getElementById("status").innerHTML = "HTML5 Geolocation is supported in your browser, but location is not available";
+        return;
+    }
+    document.getElementById("latitude").innerHTML = lat;
+    document.getElementById("longitude").innerHTML = lon;
+    document.getElementById("altitude").innerHTML = alt;
+    }
+     function failure(code)
+    {
+       console.log("error code = ", code);
+    }
+
+	
+
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

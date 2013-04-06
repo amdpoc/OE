@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HTML5: Geolocation with Google Map</title>
+<style type="text/css">
+#map {
+	height: 400px;
+	width: 600px;
+	border: 1px solid #333;
+	margin-top: 0.6em;
+}
+</style>
+<script src="https://maps.googleapis.com/maps/api/js?sensor=true&libraries=places"></script>
+<script>
+var lat, lon;
+var map;
+var infowindow;
+
+function loadGeoData() {
+	if (navigator.geolocation) {
+		navigator.geolocation.getCurrentPosition(initialize);
+	}
+};
+function initialize(position) {
+	lat = position.coords.latitude;
+	lon = position.coords.longitude;
+	var foodMap = new google.maps.LatLng(lat, lon);
+	map = new google.maps.Map(document.getElementById('map'), {
+		mapTypeId: google.maps.MapTypeId.ROADMAP,
+		center: foodMap,
+		zoom: 15
+	});		
+
+	var request = {
+		location: foodMap,
+		radius: 1000,
+		types: ['restaurant']
+	};
+		
+	infowindow = new google.maps.InfoWindow();
+	var service = new google.maps.places.PlacesService(map);
+	service.search(request, callback);
+};
+	  
+function callback(results, status) {
+	if (status === google.maps.places.PlacesServiceStatus.OK) {
+		for (var i = 0; i < results.length; i++) {
+			createMarker(results[i]);
+			}
+		}
+	};
+
+function createMarker(place) {
+	var placeLoc = place.geometry.location;
+	var marker = new google.maps.Marker({
+		map: map,
+		position: place.geometry.location
+});
+
+google.maps.event.addListener(marker, 'click', function() {
+		infowindow.setContent(place.name);
+		infowindow.open(map, this);
+		});
+}
+	  
+google.maps.event.addDomListener(window, 'load', initialize);
+
+</script>
+</head>
+<body onLoad="loadGeoData();">
+<header>
+  <h1>geolocation with Google Map</h1>
+</header>
+
+
+<section>
+  <p>Finding your location<span id="status"> ... </span></p>
+</section>
+<article id="map"></article>
+</body>
+</html>

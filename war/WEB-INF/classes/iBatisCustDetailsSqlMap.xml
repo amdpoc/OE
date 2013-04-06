@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC
+    "-//iBATIS.com//DTD SQL Map 2.0//EN"
+    "http://www.ibatis.com/dtd/sql-map-2.dtd">
+<sqlMap>
+<cacheModel id="custDetailsCache" type="LRU">
+    <flushInterval hours="24" />
+    <property name="size" value="1000" />
+ </cacheModel>
+
+<resultMap id="custAssignEntity" class="ilink.domain.CustAssignDataType">
+		<result property="project" column="project"/>
+		<result property="employeeName" column="emp_name"/>
+</resultMap>
+<select id="isCustomerAssignedToRep" resultMap="custAssignEntity" parameterClass="java.util.HashMap" cacheModel="custDetailsCache">
+     SELECT DISTINCT pr.project_year || ' ' || pr.project_code project,
+                e.emp_first_name || ' ' || e.employee_surname emp_name
+           FROM employee e,
+                project_issue pr,
+                (SELECT   product.customer_id, product_issue.project_code_3,
+                          product_issue.project_issue_num_3,
+                          assignment.rep_id
+                     FROM (SELECT    /*+ ordered  use_nl(PRODUCT, PRD_CURR_ISSUE) use_nl(PRODUCT, ASSIGNMENT) */
+                          DISTINCT product.customer_id,
+                                   product.product_code,
+                                   product.product_issue_num
+                              FROM product,
+                                   prd_curr_issue,
+                                   assignment
+                             WHERE product.customer_id = #custId#
+                               AND product.product_code =
+                                           prd_curr_issue.product_code
+                               AND product.product_issue_num =
+                                      prd_curr_issue.product_issue_num
+                               AND product.assignment_id =
+                                              assignment.assignment_id
+                               AND assignment.rep_id = #repId#) inline1,
+                          product,
+                          assignment,
+                          product_issue,
+                          product_type
+                    WHERE product.customer_id = inline1.customer_id
+                      AND product.product_code = inline1.product_code
+                      AND (   product.product_issue_num =
+                                                     inline1.product_issue_num
+                           OR product.product_issue_num =
+                                              (inline1.product_issue_num - 1
+                                              )
+                          )
+                      AND product_issue.product_code = product.product_code
+                      AND product_issue.product_issue_num =
+                                                     product.product_issue_num
+                      AND product.assignment_id = assignment.assignment_id
+                      AND assignment.rep_id = #repId#
+                      AND product_type.product_type =
+                                                    product_issue.product_type
+                      AND product_type.issue_related_ind = 'Y'
+                 GROUP BY product.customer_id,
+                          product_issue.project_code_3,
+                          product_issue.project_issue_num_3,
+                          assignment.rep_id
+                 UNION
+                 SELECT   product.customer_id, product_issue.project_code_3,
+                          product_issue.project_issue_num_3,
+                          assignment.rep_id
+                     FROM (SELECT DISTINCT product_tracking.customer_id
+                                      FROM assignment,
+                                           product_tracking
+                                     WHERE product_tracking.customer_id =
+                                                                    #custId#
+                                       AND product_tracking.last_version_ind =
+                                                                           'Y'
+                                       AND product_tracking.product_issue_num =
+                                                                           999
+                                       AND product_tracking.assignment_id =
+                                                      assignment.assignment_id
+                                       AND assignment.rep_id = #repId#) inline1,
+                          product,
+                          item,
+                          assignment,
+                          product_tracking product_issue
+                    WHERE product.customer_id = inline1.customer_id
+                      AND item.customer_id = product.customer_id
+                      AND item.product_code = product.product_code
+                      AND item.product_issue_num = product.product_issue_num
+                      AND product.product_issue_num = 999
+                      AND item.last_version_ind = 'Y'
+                      AND item.nt_item_state IN (7, 1, 5, 2, 3, 9)
+                      AND item.issue_related_ind = 'N'
+                      AND product_issue.customer_id = product.customer_id
+                      AND product_issue.product_code = product.product_code
+                      AND product_issue.product_issue_num =
+                                                     product.product_issue_num
+                      AND product_issue.item_id = item.item_id
+                      AND product_issue.last_version_ind = 'Y'
+                      AND item.assignment_id = assignment.assignment_id
+                      AND assignment.rep_id = #repId#
+                 GROUP BY product.customer_id,
+                          product_issue.project_code_3,
+                          product_issue.project_issue_num_3,
+                          assignment.rep_id
+                 UNION
+                 SELECT   product.customer_id, product_issue.project_code_3,
+                          product_issue.project_issue_num_3,
+                          assignment.rep_id
+                     FROM (SELECT projects.project_code_3 project_code_3,
+                                  projects.project_issue_num_3
+                                                          project_issue_num_3,
+                                  product_tracking.assignment_id,
+                                  product_tracking.retirement_status,
+                                  product_tracking.product_status,
+                                  product_tracking.product_code
+                             FROM product_tracking,
+                                  (SELECT project_issue.project_code
+                                                               project_code_3,
+                                          project_issue.project_issue_num
+                                                          project_issue_num_3
+                                     FROM project_issue, op_logical_date
+                                    WHERE op_logical_date.logical_date
+                                             BETWEEN project_issue.project_from_date
+                                                 AND project_issue.project_to_date
+                                      AND op_logical_date.logical_date_type =
+                                                                           'O'
+                                      AND project_issue.issue_related_ind =
+                                                                           'N'
+                                      AND ROWNUM = 1) projects
+                            WHERE product_tracking.customer_id = #custId#
+                              AND product_tracking.product_issue_num = 999
+                              AND product_tracking.last_version_ind = 'Y') product_issue,
+                          product,
+                          assignment
+                    WHERE product_issue.retirement_status = 'A'
+                      AND product_issue.product_status = 'E'
+                      AND product.product_code = product_issue.product_code
+                      AND product.product_issue_num = 999
+                      AND product_issue.assignment_id =
+                                                      assignment.assignment_id
+                      AND assignment.rep_id = #repId#
+                      AND product.customer_id = #custId#
+                 GROUP BY product.customer_id,
+                          product_issue.project_code_3,
+                          product_issue.project_issue_num_3,
+                          assignment.rep_id) nonopps
+          WHERE nonopps.customer_id = #custId#
+            AND nonopps.rep_id = #repId#
+            AND nonopps.project_code_3 = pr.project_code
+            AND nonopps.project_issue_num_3 = pr.project_issue_num
+            AND nonopps.rep_id = e.employee_id
+</select>
+
+<select id="getCustNameById" resultClass="java.lang.String" parameterClass="String" cacheModel="custDetailsCache">
+   SELECT DISTINCT DBMS_XMLGEN.CONVERT (REPLACE (REPLACE (REPLACE (DECODE (c.main_main_listing_id,
+                        NULL, c.business_name,
+                        l.listed_name
+                       ) , CHR (13),'%0D'), CHR (10), '%0A'), CHR (92), '%5C')) business_name
+           FROM customer c, listing l
+          WHERE c.customer_id = #value#
+            AND c.main_main_listing_id = l.listing_id(+)
+            AND l.last_version_ind(+) = 'Y'
+           AND ROWNUM = 1
+</select>
+
+<select id="getCustTitleById" resultClass="java.lang.String" parameterClass="String" cacheModel="custDetailsCache">
+         SELECT DISTINCT c.customer_id || ' - ' ||
+                            DBMS_XMLGEN.CONVERT (REPLACE (REPLACE (REPLACE (
+                                DECODE (c.main_main_listing_id, NULL, c.business_name,l.listed_name) ,
+                               CHR (13),'%0D'), CHR (10), '%0A'), CHR (92), '%5C')) business_name
+           FROM customer c, listing l
+          WHERE c.customer_id = #value#
+            AND c.main_main_listing_id = l.listing_id(+)
+            AND l.last_version_ind(+) = 'Y'
+           AND ROWNUM = 1
+</select>
+    
+<resultMap id="custContactEntity" class="ilink.domain.ContactDataType">
+		<result property="contactName" column="contact_name"/>
+		<result property="contactEmailAddress" column="e_mail_address"/>
+</resultMap>
+ <select id="getCustContactInfo" resultMap="custContactEntity" parameterClass="String" cacheModel="custDetailsCache">
+ SELECT DISTINCT c.customer_id,
+                DBMS_XMLGEN.CONVERT(REPLACE (REPLACE (REPLACE (NVL (co.contact_name, ''),CHR (13),'%0D'),CHR (10),'%0A'),CHR (92),'%5C')) contact_name,
+                co.e_mail_address
+           FROM customer c, contact co
+          WHERE c.customer_id = #customerId# AND c.contact_id = co.contact_id(+)
+</select>
+
+     <resultMap id="custDetailsResult" class="ilink.domain.CustDataType">
+       <result property="customerId"      column="customer_id"/>
+       <result property="contactId"       column="contact_id"/>
+       <result property="addressId"       column="address_id"/>
+       <result property="disconectedInd"  column="disconnected_ind"/>
+       <result property="listingPhone"    column="listing_phone"/>
+       <result property="formattedListingPhone"   column="formatted_listing_phone"/>
+       <result property="formattedAddress"   column="formatted_address"/>
+       <result property="lockoutInd"       column="lockout_ind"/>
+       <result property="contactName"      column="contact_name"/>
+       <result property="contactTitle"     column="contact_title"/>
+       <result property="emailAddress"     column="e_mail_address"/>
+       <result property="internetAddress"  column="internet_address"/>
+       <result property="contactPhone"     column="contact_phone"/>
+       <result property="formattedContactPhone"     column="formatted_contact_phone"/>
+       <result property="businessName"       column="business_name"/>
+       <result property="headingName"      column="heading_name"/>
+       <result property="prospectCode"     column="cst_prospect_code"/>
+       <result property="latitude"         column="latitude" />
+       <result property="longitude"        column="longitude" />
+       <result property="hbd"              column="hbd" />
+       <result property="creditClass"      column="cust_credit_class" />
+       <result property="pastDueAmt"       column="past_due_amt" />
+       <result property="oldestDeptAge"    column="oldest_dept_age" />
+       <result property="latestNote"       column="latest_note" />
+       <result property="nisdAmt"		   column="cust_nisd_amt" />
+       <result property="botsAmt"         column="cust_bots_amt" />
+       <result property="recentClaimDate"  column="recent_claim_date" />
+       <result property="respRep"          column="resp_rep" />
+    </resultMap>
+
+    <select id="getCustDetails" resultMap="custDetailsResult" parameterClass="long">
+        SELECT DISTINCT c.customer_id, (DECODE (l.listing_status, 'O', 'Yes', 'No')
+                ) disconnected_ind,
+                (SELECT INITCAP (LOWER (heading.uppr_head_name)
+                                )
+                   FROM heading
+                  WHERE heading.heading_code = l.heading_code) heading_name,
+                TO_CHAR (c.recent_claim_date, 'YYYY') recent_claim_date,
+                DBMS_XMLGEN.CONVERT (REPLACE (REPLACE (REPLACE (
+                                DECODE (c.main_main_listing_id, NULL, c.business_name,l.listed_name) ,
+                               CHR (13),'%0D'), CHR (10), '%0A'), CHR (92), '%5C')) business_name,
+                DECODE (atn_npa,
+                        NULL, '',
+                        ('(' || atn_npa || ') ' || atn_cop || ' - '
+                         || atn_line_no
+                        )
+                       ) formatted_listing_phone,
+                DECODE (atn_npa,
+                        NULL, '',
+                        (atn_npa || '-' || atn_cop || '-' || atn_line_no
+                        )
+                       ) listing_phone,
+                NVL (addr.address_id, 0) address_id,
+                DBMS_XMLGEN.CONVERT (REPLACE (REPLACE (REPLACE (LTRIM (DECODE (addr.po_box,
+                                   NULL, (   NVL (addr.house_no, '')
+                                          || ' '
+                                          || DECODE (addr.directional,
+                                                     NULL, '',
+                                                     (addr.directional || '.'
+                                                     )
+                                                    )
+                                          || NVL (addr.street_name, '')
+                                          || ' ' || NVL (addr.post_directional, '')
+                                          || ' ' || NVL (addr.suite, '')
+                                          || ' '
+                                    ),
+                                   addr.po_box
+                                  )
+                        || ' '
+                        || NVL (com.community_name, '')
+                        || ' '
+                        || com.state_abbr
+                        || ' '
+                        || addr.zip_five
+                        || ' '
+                        || NVL (addr.zip_four, '')
+                       ), CHR (13),'%0D'), CHR (10), '%0A'), CHR (92), '%5C'))  AS formatted_address,
+                c.hbd, c.lockout_ind,
+                (CASE
+                    WHEN (SELECT OLD.logical_date
+                            FROM op_logical_date OLD
+                           WHERE OLD.logical_date_type = 'O') &lt;=
+                                                             c.oldest_due_date
+                       THEN ' '
+                    ELSE TO_CHAR (  ROUND (  (SELECT OLD.logical_date
+                                                FROM op_logical_date OLD
+                                               WHERE OLD.logical_date_type =
+                                                                           'O')
+                                           - c.oldest_due_date
+                                          )
+                                  + 1
+                                 )
+                 END
+                ) oldest_dept_age,
+                (SELECT dc.decode_display
+                   FROM domain_decodes dc
+                  WHERE dc.domain_code = 'PROSPCODE'
+                    AND c.cst_prospect_code = dc.code_value)
+                                                            cst_prospect_code,
+                NVL (co.contact_id, 0) contact_id,
+                DBMS_XMLGEN.CONVERT (REPLACE (REPLACE (REPLACE (NVL (co.contact_name, ''), CHR (13),'%0D'), CHR (10), '%0A'), CHR (92), '%5C')) contact_name,
+                DECODE (co.contact_tn_npa,
+                        NULL, '',
+                        (   ' ('
+                         || co.contact_tn_npa
+                         || ') '
+                         || co.contact_tn_cop
+                         || ' - '
+                         || co.contact_tn_line_no
+                        )
+                       ) formatted_contact_phone,
+                DECODE (co.contact_tn_npa,
+                        NULL, '',
+                        (   co.contact_tn_npa
+                         || '-'
+                         || co.contact_tn_cop
+                         || '-'
+                         || co.contact_tn_line_no
+                        )
+                       ) contact_phone,
+                NVL (dbms_xmlgen.convert(co.contact_title),' ') contact_title, co.e_mail_address, co.internet_address,
+                dbms_xmlgen.convert((SELECT    TO_CHAR (cn.creation_date,
+                                    'MM/DD/YY HH:MI AM'
+                                   )
+                        || ' - '
+                        || ' ['
+                        || cn.rep_id
+                        || ' - '
+                        || INITCAP (   e.emp_first_name
+                                    || ' '
+                                    || e.employee_surname
+                                   )
+                        || ']'
+                        || '  -  '
+                        || CASE WHEN LENGTH (cn.note_text) >= 3500
+                              THEN REPLACE(REPLACE(REPLACE(NVL(SUBSTR(cn.note_text,0,3500)|| '...',' '),CHR (13),'%0D'),CHR (10),'%0A'), CHR (92),'%5C')
+                             ELSE REPLACE(REPLACE(REPLACE (NVL (cn.note_text,' '), CHR (13),'%0D'),CHR (10),'%0A'), CHR (92),'%5C')
+                           END  AS note
+                       /* || REPLACE (REPLACE (REPLACE (NVL (cn.note_text, ' '), CHR (13),'%0D'), CHR (10), '%0A'), CHR (92), '%5C') AS note */
+                   FROM customer_notes cn, employee e
+                  WHERE cn.customer_id = c.customer_id
+                    AND cn.rep_id = e.employee_id
+                    AND cn.note_id = (SELECT MAX (cn1.note_id)
+                                        FROM customer_notes cn1
+                                       WHERE cn1.customer_id = c.customer_id)))
+                                                                  latest_note,
+                NVL (addr.latitude, 0) AS latitude,
+                NVL (addr.longitude, 0) AS longitude,
+                (SELECT credit_class.cc_description
+                                   AS cust_credit_class
+                   FROM credit_class
+                  WHERE credit_class.cc_code(+) =
+                                     c.cust_credit_class)
+                                                         AS cust_credit_class,
+                ltrim(to_char(c.past_due_amt,'9999990.99')) past_due_amt,
+                ltrim(to_char(c.NISD_AMT,'9999990.99')) cust_nisd_amt , ltrim(to_char(c.BOTS_AMT,'9999990.99')) cust_bots_amt,
+                (SELECT    e.employee_id
+                        || ' - '
+                        || INITCAP (LOWER (e.emp_first_name))
+                        || ' '
+                        || INITCAP (LOWER (e.employee_surname))
+                   FROM employee e
+                  WHERE e.employee_id =
+                           (SELECT a.rep_id
+                              FROM product p, prd_curr_issue pci,
+                                   assignment a
+                             WHERE p.product_code = pci.product_code
+                               AND p.product_issue_num = pci.product_issue_num
+                               AND p.customer_id = c.customer_id
+                               AND p.assignment_id = a.assignment_id
+                               AND ROWNUM = 1)) resp_rep
+           FROM customer c, listing l, contact co, address addr,
+                community com
+          WHERE c.customer_id = #custId#
+            AND addr.community_id = com.community_id(+)
+            AND c.contact_id = co.contact_id(+)
+            AND co.address_id = addr.address_id(+)
+            AND c.main_main_listing_id = l.listing_id(+)
+            AND l.last_version_ind(+) = 'Y'
+    </select>
+
+    <resultMap id="custBillingDetailsResult" class="ilink.domain.CustBillingInfoType">
+        <result property="customerId"           column="customer_id"/>
+        <result property="contactName"          column="contact_name"/>
+        <result property="contactTitle"         column="contact_title"/>
+        <result property="contactPhoneNPA"      column="contact_tn_npa"/>
+        <result property="contactPhoneCOP"      column="contact_tn_cop"/>
+        <result property="contactPhoneLineNo"   column="contact_tn_line_no"/>
+        <result property="contactFaxNPA"        column="fax_tn_npa"/>
+        <result property="contactFaxCOP"        column="fax_tn_cop"/>
+        <result property="contactFaxLineNo"     column="fax_tn_line_no"/>
+        <result property="street"       column="street_name"/>
+        <result property="city"         column="city_name"/>
+        <result property="state"        column="state_abbr"/>
+        <result property="zipFive"      column="zip_five"/>
+        <result property="zipFour"      column="zip_four"/>
+        <result property="nisdAmt"		column="cust_nisd_amt" />
+        <result property="botsAmt"      column="cust_bots_amt" />
+    </resultMap>
+
+    <select id="getCustBillingDetails" resultMap="custBillingDetailsResult" parameterClass="long">
+        select
+            cust.customer_id,
+            co.contact_name,
+            co.contact_title,
+            co.contact_tn_npa,
+            co.contact_tn_cop,
+            co.contact_tn_line_no,
+            co.fax_tn_npa,
+            co.fax_tn_cop,
+            co.fax_tn_line_no,
+            (LTRIM (DECODE(addr.po_box,NULL,
+                    (NVL(addr.house_no,'')
+                        || ' '
+                        || DECODE (addr.directional,NULL,'',(addr.directional || '.'))
+                        || NVL (addr.street_name, '')
+                        || ' '
+                        || NVL (addr.post_directional, '')
+                        || ' '
+                        || NVL (addr.suite, '')
+                        || ' '
+                        ),
+                        addr.po_box
+                    )
+                )
+            ) street_name,
+            NVL (com.community_name, '') city_name,
+            com.state_abbr,
+            addr.zip_five zip_five,
+            NVL (addr.zip_four, '') zip_four,
+            ltrim(to_char(cust.NISD_AMT,'9999990.99')) cust_nisd_amt,
+            ltrim(to_char(cust.BOTS_AMT,'9999990.99')) cust_bots_amt
+
+        from
+            customer cust, contact co, address addr, community com
+        where cust.customer_id = #custId#
+            and co.contact_id = cust.contact_id
+            and co.address_id = addr.address_id
+            and addr.community_id = com.community_id
+    </select>
+</sqlMap>

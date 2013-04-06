@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+	
+	<!--  Map all opportunity list requests to the same controller -->
+	<bean class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+		<property name="mappings">
+			<props>
+               <prop key="/customerList.htm">custListController</prop>               
+               <prop key="/customerDetails.htm">custDetailsController</prop>
+               <prop key="/newCustNote.htm">newCustNoteController</prop>
+ 			</props>
+		</property>
+	</bean>
+
+    <!-- the application context definition for the ilink DispatcherServlet -->
+	<bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
+		<property name="basename" value="messages"/>
+	</bean>
+    <bean id="stateMngr" class="ilink.utils.StateManager"/>
+		
+	<bean id="custListController" class="ilink.web.CustListController">
+        <property name="stateMngr" ref="stateMngr"/>
+        <property name="esignEnvelopeManager" ref="esignEnvelopeManager"/>
+    </bean>
+	
+    <bean id="custDetailsController" class="ilink.web.CustDetailsController">
+        <property name="stateMngr" ref="stateMngr"/>
+        <property name="custManager" ref="custManager"/>
+    </bean>
+
+    <bean id="newCustNoteController" class="ilink.web.NewCustNoteController">
+        <property name="stateMngr" ref="stateMngr"/>
+        <property name="custNotesManager" ref="custNotesManager"/>
+    </bean>
+
+	<!-- ViewResolver Mappings -->	
+	<bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+		<property name="prefix" value="/WEB-INF/jsp/"/>
+		<property name="suffix" value=".jsp"/>
+	</bean>
+	
+	<!-- THEME -->
+	<bean id="themeSource" class="org.springframework.ui.context.support.ResourceBundleThemeSource">
+		<property name="basenamePrefix" value="theme-" />
+	</bean>
+	 
+	<!-- Theme Change Interceptor and Resolver definition -->
+	<bean id="themeChangeInterceptor" class="org.springframework.web.servlet.theme.ThemeChangeInterceptor">
+	    <property name="paramName" value="theme" />
+	</bean>
+	
+	<bean id="themeResolver" class="org.springframework.web.servlet.theme.CookieThemeResolver">
+	    <property name="defaultThemeName" value="default" />
+	</bean>
+	 
+	<bean id="handlerMapping" class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping">
+	    <property name="interceptors">
+	        <list>
+	            <ref bean="themeChangeInterceptor" />
+	        </list>
+	    </property>
+	</bean>
+</beans>

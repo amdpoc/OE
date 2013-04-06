@@ -1,0 +1,54 @@
+button.ui-corner-left{-webkit-radius:3px;}
+button.ui-state-default{border:1px solid #999;background:transparent;font-weight:bold;color:#ccc;}
+button.ui-button{font-size:12px;margin:5px 0 0 -1px;}
+
+.ui-widget-content { border: 1px solid #333333; background: #cccccc url(images/ui-bg_flat_75_cccccc_40x100.png) 50% 50% repeat-x; color: #666666; }
+
+/* APPT UPDATE CALENDAR */
+div#appointment_module .ui-widget-content {border-width:0px;background:transparent;color:#AAA;float:right;}
+div#appointment_module .ui-state-default{border-width:0px;background:transparent;font-weight:bold;color:#ccc; }
+div#appointment_module .ui-state-highlight {border: 1px solid #ffffff; background: #999999 url(images/ui-bg_flat_55_999999_40x100.png) 50% 50% repeat-x; color: #ffffff; }
+
+div#appointment_module .ui-widget-header { border:1px solid #666; background:transparent;color:#ccc;font-weight:bold;}
+div#appointment_module .ui-datepicker th {padding: .7em .3em; text-align:right;font-weight:normal;border:0;font-size:12px;color:#666;}
+	div#appointment_module .ui-datepicker td.ui-datepicker-current-day a.ui-state-active{color:#fbd200;}
+	div#appointment_module .ui-datepicker td.ui-datepicker-current-day a.ui-state-highlight{color:#fff;}
+	
+@media only screen and (orientation:portrait)
+{
+	div#appointment_module .ui-widget{font-size:0.8em}
+}
+
+/* ICONS IN BUTTONS */
+.ui-corner-all {-moz-border-radius:3px;-webkit-border-radius:3px;border-radius:3px;}
+.ui-state-highlight, 
+.ui-widget-content .ui-state-highlight, 
+.ui-widget-header .ui-state-highlight  {border: 1px solid #ccc; background: #999999 url(images/ui-bg_flat_55_999999_40x100.png) 50% 50% repeat-x; color: #ffffff; }
+
+.ui-state-lowlight{border: 1px solid #acacac; background: #999999 url(images/ui-bg_flat_75_cccccc_40x100.png) 50% 50% repeat-x; color: #ffffff; }
+	.ui-state-lowlight .ui-icon {background-image: url(images/ui-icons_ffffff_256x240.png); }
+	.ui-state-active .ui-icon {background-image: url(images/ui-icons_ffffff_256x240.png); }
+	.ui-state-passive .ui-icon {background-image: url(images/ui-icons_ffffff_256x240.png); }
+
+.ui-state-notice, 
+.ui-widget-content .ui-state-notice, 
+.ui-widget-header .ui-state-notice  {border: 1px solid #ccc; background: #999999 url(images/ui-bg_flat_75_cccccc_40x100.png) 50% 50% repeat-x; color: #ffffff;}
+	.ui-state-notice .ui-icon{background-image: url(images/ui-icons_a700b6_256x240.png);}
+	
+.ui-state-grey-btn, 
+.ui-widget-content .ui-state-grey-btn, 
+.ui-widget-header .ui-state-grey-btn  {border: 1px solid #999; background: #dadada url(ui-bg_highlight-soft_75_dadada_1x100.png) 50% 50% repeat-x;color: #666;font-weight:bold;}
+	.ui-state-grey-btn span.ui-icon{background-image: url(images/ui-icons_888888_256x240.png);font-weight:bold;color: #666;}
+
+/* ICONS */
+li.lastLevel .ui-icon,
+li.nextLevel .ui-icon{background-image: url(images/ui-icons_ffffff_256x240.png);position:absolute;top:4px;left:5px;width:14px;height:14px;}
+
+/* BUTTONS */
+.ui-state-active { border: 1px solid #ccc; background: #a700b6 url(images/ui-bg_highlight-hard_65_a700b6_1x100.png) 50% 50% repeat-x; font-weight: bold; color: #fff; }
+.ui-state-passive { border: 1px solid #ccc; background: #dadada url(images/ui-bg_highlight-soft_75_dadada_1x100.png) 50% 50% repeat-x; font-weight: bold; color: #fff; }
+.ui-state-active a, .ui-state-active a:link, .ui-state-active a:visited { color: #fff; text-decoration: none; }
+
+.ui-corner-all4{-webkit-border-radius:4px;}
+.ui-corner-all3{-webkit-border-radius:3px;}
+ 
